@@ -288,6 +288,7 @@ int main(int, const char*[])
                 cameraController.update(cameraControllerUpdateInfo);
             }
 
+#if 0
             auto mouseAimPoint = shape_shooter::Context::instance().inputManager.get_mouse_aim_point();
             if (input.keyboard.pressed(gvk::system::Key::C)) {
                 // std::cout << glm::to_string(shapeShooterContext.gameCamera.transform.translation) << std::endl; // 0.35, 996.331, -16.84
@@ -304,6 +305,7 @@ int main(int, const char*[])
                 // apply_directed_force() is used just once, for the bullets
                 shape_shooter::Context::instance().grid.apply_explosive_force(8, mouseAimPoint, 80);
             }
+#endif
 
             if (input.keyboard.pressed(gvk::system::Key::Backspace)) {
                 lookType = lookType ? 0 : 1;
@@ -518,7 +520,7 @@ int main(int, const char*[])
                 gvk_result((wsiStatus == VK_SUBOPTIMAL_KHR || wsiStatus == VK_ERROR_OUT_OF_DATE_KHR) ? VK_SUCCESS : wsiStatus);
             }
 
-            static const gvk::system::Milliseconds<> FrameDuration(1.0f / 60.0f * 1000);
+            static const gvk::system::Milliseconds<> FrameDuration(shape_shooter::OneOverSixty * 1000.0f);
             auto frameEnd = gvk::system::SteadyClock::now();
             auto frameTime = frameEnd - frameStart;
             if (frameTime < FrameDuration) {

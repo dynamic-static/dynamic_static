@@ -66,17 +66,14 @@ void PlayerShip::update()
         (void)aimRotation;
 
         float bulletSpread = rng.range(-0.04f, 0.04f) + rng.range(-0.04f, 0.04f);
-        auto bulletVelocity = from_polar(aimAngle + bulletSpread, 11.0f);
+        auto bulletVelocity = from_polar(aimAngle + bulletSpread, 11.0f / OneOverSixty);
 
-#if 1 // Disabled to debug grid
         entityManager.create_entity<Bullet>(position + glm::vec3{ 35, 0, -8 } * aimRotation, bulletVelocity);
         entityManager.create_entity<Bullet>(position + glm::vec3{ 35, 0,  8 } * aimRotation, bulletVelocity);
         context.audio.play(SoundEffect::Shot);
-#endif
     }
     mCooldownTimer -= deltaTime;
 
-#if 1
     velocity += inputManager.get_movement_direction() * mSpeed * deltaTime;
     position += velocity;
     const auto& halfPlayFieldExtent = playField.extent * 0.5f;
@@ -86,7 +83,6 @@ void PlayerShip::update()
     }
     make_exhaust_fire();
     velocity = { };
-#endif
 }
 
 void PlayerShip::draw() const

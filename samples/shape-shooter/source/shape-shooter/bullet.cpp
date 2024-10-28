@@ -47,12 +47,12 @@ uint64_t Bullet::get_type_id() const
 void Bullet::update()
 {
     auto& context = Context::instance();
-    const auto& playField = context.playField;
-    auto& particleManager = context.particleManager;
-    position += velocity; // deltaTime
-    // Context::instance().grid.apply_explosive_force(0.5f * glm::length(velocity), position, /* from_1920x1080(64, 80) */ 2.666666666666669f);
-    Context::instance().grid.apply_explosive_force(0.5f * glm::length(velocity), position, 80.0f);
-    if (!playField.contains(position)) {
+    position += velocity * context.clock.elapsed<gvk::system::Seconds<float>>();
+
+    std::cout << glm::length(velocity) << " vs " << glm::length(velocity) * OneOverSixty << std::endl;
+
+    Context::instance().grid.apply_explosive_force(0.5f * glm::length(velocity) * OneOverSixty, position, 80.0f);
+    if (!context.playField.contains(position)) {
         expired = true;
         for (uint32_t i = 0; i < 30; ++i) {
             Particle particle{ };
@@ -62,7 +62,7 @@ void Bullet::update()
             particle.duration = 50;
             particle.scale = { 1, 1, 1 };
             particle.type = Particle::Type::Bullet;
-            particleManager.add(particle);
+            context.particleManager.add(particle);
         }
     }
 }

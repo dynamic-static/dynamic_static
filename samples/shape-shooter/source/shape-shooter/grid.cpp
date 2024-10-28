@@ -44,30 +44,11 @@ void Grid::PointMass::increase_damping(float factor)
 
 void Grid::PointMass::update(float deltaTime)
 {
-    (void)deltaTime;
-#if 0
-    velocity += acceleration;
-    position += velocity; // *deltaTime;
-    acceleration = { };
-    if (glm::length2(velocity) < 0.001f * 0.001f) {
-        velocity = { };
-    }
-    velocity *= damping;
-    damping = 0.98f;
-#endif
-#if 0
-    auto previousPosition = position;
-    position = 2.0f * position - position + acceleration * deltaTime * deltaTime;
-    velocity = (position - previousPosition) / (deltaTime * 2.0f);
-#endif
-
-
+    deltaTime = 1;
 #if 1
     // Symplectic Euler integration
-    velocity += acceleration;// *deltaTime;
-    position += velocity;// *deltaTime;
-    // position += velocity * deltaTime + acceleration * 0.5f * deltaTime * deltaTime;
-    // velocity += acceleration * deltaTime;
+    velocity += acceleration * deltaTime;
+    position += velocity * deltaTime;
 #else
     // Verlet integration
     auto previousPosition = position;
@@ -78,7 +59,7 @@ void Grid::PointMass::update(float deltaTime)
     if (glm::length2(velocity) < 0.001f * 0.001f) {
         velocity = { };
     }
-    velocity *= damping;// *deltaTime;
+    velocity *= damping;
     damping = 0.98f;
 }
 
@@ -95,12 +76,12 @@ void Grid::Spring::update(std::vector<PointMass>& pointMasses)
 {
     assert(mP0_i < pointMasses.size());
     assert(mP1_i < pointMasses.size());
-    auto v = pointMasses[mP0_i].position - pointMasses[mP1_i].position;
-    auto length = glm::length(v);
+    auto dx = pointMasses[mP0_i].position - pointMasses[mP1_i].position;
+    auto length = glm::length(dx);
     if (mTargetLength < length) {
-        v = (v / length) * (length - mTargetLength);
+        dx = (dx / length) * (length - mTargetLength);
         auto dv = pointMasses[mP1_i].velocity - pointMasses[mP0_i].velocity;
-        auto force = mStiffness * v - dv * mDamping;
+        auto force = mStiffness * dx - dv * mDamping;
         pointMasses[mP0_i].apply_force(-force);
         pointMasses[mP1_i].apply_force(force);
     }
