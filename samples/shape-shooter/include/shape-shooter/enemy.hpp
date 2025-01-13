@@ -42,7 +42,7 @@ public:
     bool is_active() const;
     void handle_collision(const Enemy& other);
     void update() override final;
-    void draw() const override final;
+    void draw(dst::gfx::SpriteRenderer& spriteRenderer) const override final;
 
 private:
     class Behavior

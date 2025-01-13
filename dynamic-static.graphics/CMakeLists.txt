@@ -27,6 +27,7 @@ dst_add_static_library(
         "${includePath}/sprite-renderer.hpp"
         "${includePath}/sprite.hpp"
         "${includePath}/text.hpp"
+        "${includePath}/texture-atlas.hpp"
     sourceFiles
         "${sourcePath}/buffer.cpp"
         "${sourcePath}/coordinate-renderer.cpp"
@@ -36,6 +37,7 @@ dst_add_static_library(
         "${sourcePath}/sprite-renderer.cpp"
         "${sourcePath}/sprite.cpp"
         "${sourcePath}/text.cpp"
+        "${sourcePath}/texture-atlas.cpp"
 )
 
 ################################################################################

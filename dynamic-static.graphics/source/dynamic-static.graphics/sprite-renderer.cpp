@@ -197,7 +197,7 @@ void SpriteRenderer::submit(uint32_t imageIndex, const gvk::math::Transform& tra
     const auto& imageCreateInfo = mImages[imageIndex].get<gvk::Image>().get<VkImageCreateInfo>();
     Sprite sprite { };
     sprite.extent = { imageCreateInfo.extent.width, imageCreateInfo.extent.height, 0, 1 };
-    sprite.uvMin = { uv.s, uv.t, 0, (float)imageIndex };
+    sprite.uvMin = { uv.s, uv.t, 0, (float)imageIndex};
     sprite.uvMax = { uv.p, uv.q, 0, 0 };
     sprite.color = color;
     sprite.model = transform.world_from_local();
@@ -337,7 +337,7 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
                 vec4( 0.5, -0.5, 0, 1)
             );
 
-            layout(location = 0) out float fsTexindex;
+            layout(location = 0) flat out int fsTexindex;
             layout(location = 1) out vec2 fsTexcoord;
             layout(location = 2) out vec4 fsColor;
 
@@ -357,7 +357,7 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
                     vec2(sprite.uvMin.x, sprite.uvMin.y),
                     vec2(sprite.uvMax.x, sprite.uvMin.y)
                 );
-                fsTexindex = sprite.uvMin.w;
+                fsTexindex = int(sprite.uvMin.w);
                 fsTexcoord = texcoords[gl_VertexIndex];
                 fsColor = sprite.color;
             }
@@ -374,7 +374,7 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
 
             layout(set = 0, binding = 1) uniform sampler2D images[];
 
-            layout(location = 0) in float fsTexindex;
+            layout(location = 0) flat in int fsTexindex;
             layout(location = 1) in vec2 fsTexcoord;
             layout(location = 2) in vec4 fsColor;
 
@@ -382,7 +382,7 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
 
             void main()
             {
-                fragColor = texture(images[nonuniformEXT(int(fsTexindex))], fsTexcoord) * fsColor;
+                fragColor = texture(images[nonuniformEXT(fsTexindex)], fsTexcoord) * fsColor;
             }
         )";
 

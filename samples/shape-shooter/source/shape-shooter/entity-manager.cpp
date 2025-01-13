@@ -105,10 +105,10 @@ void EntityManager::kill_player()
 
 }
 
-void EntityManager::draw() const
+void EntityManager::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
 {
     for (const auto& entity : mEntities) {
-        entity->draw();
+        entity->draw(spriteRenderer);
     }
 }
 

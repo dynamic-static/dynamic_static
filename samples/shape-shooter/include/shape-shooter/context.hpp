@@ -55,7 +55,8 @@ public:
     gvk::system::Clock gameClock;
     glm::vec2 renderExtent{ };
     dst::RandomNumberGenerator rng;
-    dst::gfx::SpriteRenderer spriteRenderer;
+    // dst::gfx::SpriteRenderer spriteRenderer;
+    std::map<uint32_t, dst::gfx::SpriteRenderer> spriteRenderers;
     PlayField playField{ { 1920, 1, 1080 } };
     PlayerShip* pPlayerShip{ };
     PlayerStatus playerStatus;

@@ -108,9 +108,8 @@ void ParticleManager::update()
     }
 }
 
-void ParticleManager::draw() const
+void ParticleManager::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
 {
-    auto& spriteRenderer = Context::instance().spriteRenderer;
     for (size_t i = 0; i < mParticles.count(); ++i) {
         auto& particle = mParticles[i];
         gvk::math::Transform transform{ };

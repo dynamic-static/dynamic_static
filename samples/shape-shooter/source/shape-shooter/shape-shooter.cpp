@@ -192,11 +192,13 @@ int main(int, const char*[])
         for (uint32_t i = 0; i < (uint32_t)shape_shooter::Sprite::Count; ++i) {
             gvk_result(dst_sample_load_image(gvkContext, shape_shooter::SpriteFilePaths[i], &spriteStagingBuffer, &spriteImages[i]));
         }
+#if 0
         dst::gfx::SpriteRenderer::CreateInfo spriteRendererCreateInfo { };
         spriteRendererCreateInfo.renderPass = wsiContext.get<gvk::RenderPass>();
         spriteRendererCreateInfo.imageCount = (uint32_t)spriteImages.size();
         spriteRendererCreateInfo.pImages = spriteImages.data();
         gvk_result(dst::gfx::SpriteRenderer::create(gvkContext, spriteRendererCreateInfo, &shapeShooterContext.spriteRenderer));
+#endif
         auto spriteColor = gvk::math::Color::White;
         ///////////////////////////////////////////////////////////////////////////////
 
@@ -362,41 +364,13 @@ int main(int, const char*[])
             // shapeShooterContext.enemySpawner.update();
             shapeShooterContext.scoreBoard.update();
             shapeShooterContext.particleManager.update();
-            shapeShooterContext.spriteRenderer.begin_sprite_batch();
-
-            // SpriteSortMode.Texture
-            shapeShooterContext.entityManager.draw();
-            // SpriteSortMode.Deferred
-            shapeShooterContext.particleManager.draw();
-            shapeShooterContext.spriteRenderer.end_sprite_batch();
             ///////////////////////////////////////////////////////////////////////////////
 
             ///////////////////////////////////////////////////////////////////////////////
             // Grid
-            #if 0
-            shape_shooter::Context::instance().grid.update(deltaTime);
-#else
             shape_shooter::Context::instance().grid.update(shapeShooterContext.gameClock.elapsed<gvk::system::Seconds<float>>());
-#endif
             ///////////////////////////////////////////////////////////////////////////////
 
-#if 0
-            wsiManager.update();
-            auto swapchain = wsiManager.get_swapchain();
-            if (swapchain) {
-                uint32_t imageIndex = 0;
-                auto vkResult = wsiManager.acquire_next_image(UINT64_MAX, VK_NULL_HANDLE, &imageIndex);
-                gvk_result((vkResult == VK_SUCCESS || vkResult == VK_SUBOPTIMAL_KHR) ? VK_SUCCESS : vkResult);
-
-                auto extent = wsiManager.get_swapchain().get<VkSwapchainCreateInfoKHR>().imageExtent;
-                shapeShooterContext.gameCamera.set_aspect_ratio(extent.width, extent.height);
-                shapeShooterContext.renderExtent = { extent.width, extent.height };
-
-                // Get VkFences from the WsiManager.  The gvk::gui::Renderer will wait on these
-                //  VkFences to ensure that it doesn't destroy any resources that are still in
-                //  use by the WsiManager
-                const auto& vkFences = wsiManager.get_vk_fences();
-#else
             gvk::wsi::AcquiredImageInfo acquiredImageInfo{ };
             gvk::RenderTarget acquiredImageRenderTarget = VK_NULL_HANDLE;
             auto wsiStatus = wsiContext.acquire_next_image(UINT64_MAX, VK_NULL_HANDLE, &acquiredImageInfo, &acquiredImageRenderTarget);
@@ -405,7 +379,22 @@ int main(int, const char*[])
                 auto extent = wsiContext.get<gvk::SwapchainKHR>().get<VkSwapchainCreateInfoKHR>().imageExtent;
                 shapeShooterContext.gameCamera.set_aspect_ratio(extent.width, extent.height);
                 shapeShooterContext.renderExtent = { extent.width, extent.height };
-#endif
+
+                // TODO : Documentation
+                auto spriteRendererItr = shapeShooterContext.spriteRenderers.find(acquiredImageInfo.index);
+                if (spriteRendererItr == shapeShooterContext.spriteRenderers.end()) {
+                    dst::gfx::SpriteRenderer::CreateInfo spriteRendererCreateInfo{ };
+                    spriteRendererCreateInfo.renderPass = wsiContext.get<gvk::RenderPass>();
+                    spriteRendererCreateInfo.imageCount = (uint32_t)spriteImages.size();
+                    spriteRendererCreateInfo.pImages = spriteImages.data();
+                    spriteRendererItr = shapeShooterContext.spriteRenderers.insert({ acquiredImageInfo.index, { } }).first;
+                    gvk_result(dst::gfx::SpriteRenderer::create(gvkContext, spriteRendererCreateInfo, &spriteRendererItr->second));
+                }
+                auto& spriteRenderer = spriteRendererItr->second;
+                spriteRenderer.begin_sprite_batch();
+                shapeShooterContext.entityManager.draw(spriteRenderer);
+                shapeShooterContext.particleManager.draw(spriteRenderer);
+                spriteRenderer.end_sprite_batch();
 
                 // If the gvk::gui::Renderer is enabled, update values based on gui interaction
                 if (showGui) {
@@ -479,15 +468,15 @@ int main(int, const char*[])
                     //  cube...
                     auto pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
+                    // Grid
+                    shape_shooter::Context::instance().grid.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
+
                     // TODO : Draw sprites additively w/depth, then render grid
                     // Sprites
                     auto spriteCamera = shapeShooterContext.gameCamera;
                     // spriteCamera.projectionMode = gvk::math::Camera::ProjectionMode::Orthographic;
                     //spriteCamera.fieldOfView = viewport.width;
-                    shape_shooter::Context::instance().spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
-
-                    // Grid
-                    shape_shooter::Context::instance().grid.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
+                    spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
 
                     // CoordinateRenderer
                     const auto& gameCameraDescriptorSet = shapeShooterContext.gameCameraResources.second;

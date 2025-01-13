@@ -37,10 +37,10 @@ public:
     Entity(Sprite sprite);
     virtual ~Entity() = 0;
 
-    glm::vec2 get_sprite_extent() const;
+    glm::vec2 get_sprite_extent(const dst::gfx::SpriteRenderer& spriteRenderer) const;
     virtual uint64_t get_type_id() const = 0;
     virtual void update() = 0;
-    virtual void draw() const;
+    virtual void draw(dst::gfx::SpriteRenderer& spriteRenderer) const;
     static bool collision(const Entity& lhs, const Entity& rhs);
 
     glm::vec3 position{ };

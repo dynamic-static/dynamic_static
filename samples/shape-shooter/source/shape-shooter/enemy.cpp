@@ -48,7 +48,7 @@ Enemy::Enemy(Sprite sprite)
         assert(false);
     }
     }
-    radius = get_sprite_extent().x * 0.5f;
+    radius = get_sprite_extent(shape_shooter::get_context().spriteRenderers[0]).x * 0.5f;
     color = gvk::math::Color::Transparent;
 }
 
@@ -92,9 +92,9 @@ void Enemy::update()
     velocity *= 0.8f;
 }
 
-void Enemy::draw() const
+void Enemy::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
 {
-    Entity::draw();
+    Entity::draw(spriteRenderer);
 }
 
 void Enemy::FollowPlayer::update(Enemy& enemy)

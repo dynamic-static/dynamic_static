@@ -85,10 +85,10 @@ void PlayerShip::update()
     velocity = { };
 }
 
-void PlayerShip::draw() const
+void PlayerShip::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
 {
     if (!is_dead()) {
-        Entity::draw();
+        Entity::draw(spriteRenderer);
     }
 }
 

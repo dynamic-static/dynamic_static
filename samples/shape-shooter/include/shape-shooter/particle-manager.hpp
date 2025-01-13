@@ -40,7 +40,7 @@ public:
     void resize(size_t capacity);
     void add(const Particle& particle);
     void update();
-    void draw() const;
+    void draw(dst::gfx::SpriteRenderer& spriteRenderer) const;
 
 private:
     RingBuffer<Particle> mParticles;

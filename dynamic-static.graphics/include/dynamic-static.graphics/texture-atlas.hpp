@@ -24,41 +24,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 *******************************************************************************/
 
-#include "shape-shooter/entity.hpp"
-#include "shape-shooter/context.hpp"
+#pragma once
 
-namespace shape_shooter {
+#include "dynamic-static.graphics/defines.hpp"
 
-Entity::Entity(Sprite sprite)
-    : mSprite { sprite }
+#include "gvk-math.hpp"
+
+#include <set>
+#include <vector>
+
+namespace dst {
+namespace gfx {
+
+class TextureAtlas final
 {
-}
+public:
+};
 
-Entity::~Entity()
-{
-}
-
-glm::vec2 Entity::get_sprite_extent(const dst::gfx::SpriteRenderer& spriteRenderer) const
-{
-    const auto& imageViews = spriteRenderer.get_images();
-    assert((uint32_t)mSprite < imageViews.size());
-    const auto& imageExtent = imageViews[(uint32_t)mSprite].get<gvk::Image>().get<VkImageCreateInfo>().extent;
-    return { imageExtent.width, imageExtent.height };
-}
-
-void Entity::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
-{
-    gvk::math::Transform transform{ };
-    transform.translation = SpriteOffset + position;
-    transform.rotation = glm::angleAxis(orientation, glm::vec3{ 0, 1, 0 }) * glm::angleAxis(glm::radians(90.0f), glm::vec3{ 1, 0, 0 });
-    transform.scale *= SpriteScale;
-    spriteRenderer.submit((uint32_t)mSprite, transform, color);
-}
-
-bool Entity::collision(const Entity& lhs, const Entity& rhs)
-{
-    auto radius = lhs.radius + rhs.radius;
-    return !lhs.expired && !rhs.expired && glm::distance2(lhs.position, rhs.position) < radius * radius;
-}
-
-} // namespace shape_shooter
+} // namespace gfx
+} // namespace dst

@@ -48,7 +48,7 @@ public:
     void update();
     void handle_collisions();
     void kill_player();
-    void draw() const;
+    void draw(dst::gfx::SpriteRenderer& spriteRenderer) const;
 
     template <typename EntityType, typename ...Args>
     inline EntityType* create_entity(Args&&... args)

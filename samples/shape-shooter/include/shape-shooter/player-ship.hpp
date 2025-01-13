@@ -41,7 +41,7 @@ public:
     uint64_t get_type_id() const override final;
     bool is_dead() const;
     void update() override final;
-    void draw() const override final;
+    void draw(dst::gfx::SpriteRenderer& spriteRenderer) const override final;
 
 private:
     void make_exhaust_fire();

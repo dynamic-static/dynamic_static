@@ -45,6 +45,7 @@ public:
         gvk::RenderPass renderPass;
         uint32_t imageCount{ };
         const gvk::ImageView* pImages{ };
+        SpriteRenderer* pSpriteRendereer{ }; // TODO : Clone
     };
 
     static VkResult create(const gvk::Context& gvkContext, const CreateInfo& createInfo, SpriteRenderer* pSpriteRenderer);
