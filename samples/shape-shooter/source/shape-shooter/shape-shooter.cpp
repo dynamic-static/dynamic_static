@@ -392,8 +392,8 @@ int main(int, const char*[])
                 }
                 auto& spriteRenderer = spriteRendererItr->second;
                 spriteRenderer.begin_sprite_batch();
-                shapeShooterContext.entityManager.draw(spriteRenderer);
                 shapeShooterContext.particleManager.draw(spriteRenderer);
+                shapeShooterContext.entityManager.draw(spriteRenderer);
                 spriteRenderer.end_sprite_batch();
 
                 // If the gvk::gui::Renderer is enabled, update values based on gui interaction

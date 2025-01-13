@@ -424,14 +424,6 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
         // TODO : Blend needs to be configurable
         auto pipelineColorBlendAttachmentState = gvk::get_default<VkPipelineColorBlendAttachmentState>();
         pipelineColorBlendAttachmentState.blendEnable = VK_TRUE;
-#if 1
-        pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-        pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-        pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
-        pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-        pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
-        pipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
-#endif
 #if 0
         pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
         pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
@@ -439,17 +431,15 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
         pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
         pipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+#else
+        pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+        pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        pipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 #endif
-#if 0
-        /* .blendEnable         = */ VK_FALSE,
-        /* .srcColorBlendFactor = */ VK_BLEND_FACTOR_SRC_ALPHA,
-        /* .dstColorBlendFactor = */ VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        /* .colorBlendOp        = */ VK_BLEND_OP_ADD,
-        /* .srcAlphaBlendFactor = */ VK_BLEND_FACTOR_ONE,
-        /* .dstAlphaBlendFactor = */ VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        /* .alphaBlendOp        = */ VK_BLEND_OP_ADD,
-        /* .colorWriteMask      = */ VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-#endif
+
         auto pipelineColorBlendStateCreateInfo = gvk::get_default<VkPipelineColorBlendStateCreateInfo>();
         pipelineColorBlendStateCreateInfo.pAttachments = &pipelineColorBlendAttachmentState;
 
@@ -470,7 +460,7 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
         // TODO : Depth needs to be configurable
         auto pipelineDepthStencilStateCreateInfo = gvk::get_default<VkPipelineDepthStencilStateCreateInfo>();
 #if 1
-        pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+        pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
         pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
         pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
 #endif
