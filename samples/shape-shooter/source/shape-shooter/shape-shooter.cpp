@@ -242,6 +242,8 @@ int main(int, const char*[])
         float spawnInExplosionForce = 5000.0f;
         dst::RandomNumberGenerator rng;
 
+        bool updateGameClock = true;
+
         // gvk::system::Clock clock;
         auto& clock = shapeShooterContext.clock;
         while (
@@ -250,6 +252,9 @@ int main(int, const char*[])
             gvk::system::Surface::update();
             shapeShooterContext.audio.update();
             clock.update();
+            if (updateGameClock) {
+                shapeShooterContext.gameClock = clock;
+            }
 
             auto frameStart = gvk::system::SteadyClock::now();
 
@@ -307,11 +312,20 @@ int main(int, const char*[])
             }
 #endif
 
-            if (input.keyboard.pressed(gvk::system::Key::Backspace)) {
+            static bool sOnce;
+            if (!sOnce || input.keyboard.pressed(gvk::system::Key::Backspace)) {
+                sOnce = true;
                 lookType = lookType ? 0 : 1;
                 if (lookType) {
                     shapeShooterContext.gameCamera.transform.translation = { 0, 965, 0 };
                     shapeShooterContext.gameCamera.transform.rotation = glm::normalize(glm::angleAxis(glm::radians(90.0f), glm::vec3{ 1, 0, 0 }));
+                }
+            }
+
+            if (input.keyboard.pressed(gvk::system::Key::P)) {
+                updateGameClock = !updateGameClock;
+                if (!updateGameClock) {
+                    shapeShooterContext.gameClock = { };
                 }
             }
 
@@ -359,7 +373,11 @@ int main(int, const char*[])
 
             ///////////////////////////////////////////////////////////////////////////////
             // Grid
+            #if 0
             shape_shooter::Context::instance().grid.update(deltaTime);
+#else
+            shape_shooter::Context::instance().grid.update(shapeShooterContext.gameClock.elapsed<gvk::system::Seconds<float>>());
+#endif
             ///////////////////////////////////////////////////////////////////////////////
 
 #if 0
@@ -462,6 +480,11 @@ int main(int, const char*[])
                     auto pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
                     // TODO : Draw sprites additively w/depth, then render grid
+                    // Sprites
+                    auto spriteCamera = shapeShooterContext.gameCamera;
+                    // spriteCamera.projectionMode = gvk::math::Camera::ProjectionMode::Orthographic;
+                    //spriteCamera.fieldOfView = viewport.width;
+                    shape_shooter::Context::instance().spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
 
                     // Grid
                     shape_shooter::Context::instance().grid.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
@@ -471,11 +494,13 @@ int main(int, const char*[])
                     vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
                     coordinateRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
 
+#if 0
                     // Sprites
                     auto spriteCamera = shapeShooterContext.gameCamera;
                     // spriteCamera.projectionMode = gvk::math::Camera::ProjectionMode::Orthographic;
                     //spriteCamera.fieldOfView = viewport.width;
                     shape_shooter::Context::instance().spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
+#endif
 
                     // ScoreBoard
                     const auto& scoreBoardCameraDescriptorSet = shapeShooterContext.scoreBoardCameraResources.second;

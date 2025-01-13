@@ -34,7 +34,11 @@ namespace shape_shooter {
 
 void Grid::PointMass::apply_force(const glm::vec3& force)
 {
+#if 0
+    acceleration += force / OneOverSixty * inverseMass;
+#else
     acceleration += force * inverseMass;
+#endif
 }
 
 void Grid::PointMass::increase_damping(float factor)
@@ -130,10 +134,15 @@ void Grid::apply_implosive_force(float force, const glm::vec3& position, float r
 
 void Grid::apply_explosive_force(float force, const glm::vec3& position, float radius)
 {
+    force *= OneOverSixty;
     for (auto& pointMass : mPointMasses) {
         auto distanceSqrd = glm::distance2(position, pointMass.position);
         if (distanceSqrd < radius * radius) {
+#if 0
             pointMass.apply_force(100.0f * force * (pointMass.position - position) / (10000.0f + distanceSqrd));
+#else
+            pointMass.apply_force(100.0f * force * (pointMass.position - position) / (10000.0f + distanceSqrd));
+#endif
             pointMass.increase_damping(0.6f);
         }
     }
@@ -153,17 +162,9 @@ void Grid::update(float deltaTime)
     for (auto& spring : mSprings) {
         spring.update(mPointMasses);
     }
-#if 0
-    for (uint32_t y = 0; y < mCreateInfo.cells.y; ++y) {
-        for (uint32_t x = 0; x < mCreateInfo.cells.x; ++x) {
-            mPointMasses[index(x, y)].update(deltaTime);
-        }
-    }
-#else
     for (auto& pointMass : mPointMasses) {
         pointMass.update(deltaTime);
     }
-#endif
     mPoints.clear();
     for (uint32_t y = 0; y < mCreateInfo.cells.y; ++y) {
         for (uint32_t x = 0; x < mCreateInfo.cells.x; ++x) {

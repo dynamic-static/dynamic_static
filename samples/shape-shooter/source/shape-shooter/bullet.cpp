@@ -47,11 +47,8 @@ uint64_t Bullet::get_type_id() const
 void Bullet::update()
 {
     auto& context = Context::instance();
-    position += velocity * context.clock.elapsed<gvk::system::Seconds<float>>();
-
-    std::cout << glm::length(velocity) << " vs " << glm::length(velocity) * OneOverSixty << std::endl;
-
-    Context::instance().grid.apply_explosive_force(0.5f * glm::length(velocity) * OneOverSixty, position, 80.0f);
+    position += velocity * context.gameClock.elapsed<gvk::system::Seconds<float>>();
+    Context::instance().grid.apply_explosive_force(0.5f * glm::length(velocity), position, 80.0f);
     if (!context.playField.contains(position)) {
         expired = true;
         for (uint32_t i = 0; i < 30; ++i) {

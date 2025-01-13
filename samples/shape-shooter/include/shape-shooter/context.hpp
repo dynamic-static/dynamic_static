@@ -52,6 +52,7 @@ public:
     static bool create(const CreateInfo& createInfo, Context* pContext);
 
     gvk::system::Clock clock;
+    gvk::system::Clock gameClock;
     glm::vec2 renderExtent{ };
     dst::RandomNumberGenerator rng;
     dst::gfx::SpriteRenderer spriteRenderer;

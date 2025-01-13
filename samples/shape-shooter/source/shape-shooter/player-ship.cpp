@@ -54,7 +54,7 @@ void PlayerShip::update()
     auto& entityManager = context.entityManager;
     (void)entityManager;
     const auto& inputManager = context.inputManager;
-    auto deltaTime = Context::instance().clock.elapsed<gvk::system::Seconds<float>>();
+    auto deltaTime = Context::instance().gameClock.elapsed<gvk::system::Seconds<float>>();
 
     auto aimDirection = inputManager.get_aim_direction();
     if (0 < glm::length2(aimDirection) && mCooldownTimer <= 0) {
@@ -94,7 +94,7 @@ void PlayerShip::draw() const
 
 void PlayerShip::make_exhaust_fire()
 {
-    auto totalTime = Context::instance().clock.total<gvk::system::Seconds<float>>();
+    auto totalTime = Context::instance().gameClock.total<gvk::system::Seconds<float>>();
     if (0.1f < glm::length2(velocity)) {
         // TODO : Documentation
         orientation = get_orientation(velocity);

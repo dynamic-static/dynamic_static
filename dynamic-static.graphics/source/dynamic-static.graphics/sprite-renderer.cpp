@@ -469,7 +469,7 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
 
         // TODO : Depth needs to be configurable
         auto pipelineDepthStencilStateCreateInfo = gvk::get_default<VkPipelineDepthStencilStateCreateInfo>();
-#if 0
+#if 1
         pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
         pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
         pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;

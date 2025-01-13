@@ -75,7 +75,7 @@ void Enemy::handle_collision(const Enemy& other)
 
 void Enemy::update()
 {
-    auto deltaTime = Context::instance().clock.elapsed<gvk::system::Seconds<float>>();
+    auto deltaTime = Context::instance().gameClock.elapsed<gvk::system::Seconds<float>>();
     if (is_active()) {
         for (const auto& upBehavior : mBehaviors) {
             assert(upBehavior);

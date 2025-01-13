@@ -123,7 +123,7 @@ void ScoreBoard::reset_multiplier()
 
 void ScoreBoard::update()
 {
-    auto deltaTime = Context::instance().clock.elapsed<gvk::system::Seconds<float>>();
+    auto deltaTime = Context::instance().gameClock.elapsed<gvk::system::Seconds<float>>();
 
     mScoreTextMesh.set_text(std::to_string(mScore));
     auto pTextMeshRenderer = get_text_mesh_renderer(mScoreTextMesh);
