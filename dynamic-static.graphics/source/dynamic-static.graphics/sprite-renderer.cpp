@@ -152,8 +152,10 @@ VkResult SpriteRenderer::create(const gvk::Context& gvkContext, const CreateInfo
     gvk_result_scope_begin(VK_ERROR_INITIALIZATION_FAILED) {
         pSpriteRenderer->mImages.insert(pSpriteRenderer->mImages.end(), createInfo.pImages, createInfo.pImages + createInfo.imageCount);
         auto samplerCreateInfo = gvk::get_default<VkSamplerCreateInfo>();
-        samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
+        samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
+        samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         gvk_result(gvk::Sampler::create(gvkContext.get<gvk::Devices>()[0], &samplerCreateInfo, nullptr, &pSpriteRenderer->mSampler));
         gvk_result(pSpriteRenderer->create_pipeline(gvkContext, createInfo.renderPass));
         gvk_result(pSpriteRenderer->allocate_descriptor_set(gvkContext));
@@ -425,12 +427,32 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
         // TODO : Blend needs to be configurable
         auto pipelineColorBlendAttachmentState = gvk::get_default<VkPipelineColorBlendAttachmentState>();
         pipelineColorBlendAttachmentState.blendEnable = VK_TRUE;
+#if 0
         pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
         pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
         pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
         pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
         pipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+#endif
+#if 1
+        // Additive blending
+        pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+        pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        pipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+#endif
+#if 0
+        // Alpha blending
+        pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+        pipelineColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+        pipelineColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        pipelineColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+#endif
 
         auto pipelineColorBlendStateCreateInfo = gvk::get_default<VkPipelineColorBlendStateCreateInfo>();
         pipelineColorBlendStateCreateInfo.pAttachments = &pipelineColorBlendAttachmentState;
