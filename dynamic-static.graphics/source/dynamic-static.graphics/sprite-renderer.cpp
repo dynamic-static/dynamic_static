@@ -382,7 +382,8 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
 
             void main()
             {
-                fragColor = texture(images[nonuniformEXT(fsTexindex)], fsTexcoord) * fsColor;
+                vec4 texcolor = texture(images[nonuniformEXT(fsTexindex)], fsTexcoord);
+                fragColor = texcolor * fsColor;
             }
         )";
 
@@ -424,7 +425,7 @@ VkResult SpriteRenderer::create_pipeline(const gvk::Context& gvkContext, const g
         // TODO : Blend needs to be configurable
         auto pipelineColorBlendAttachmentState = gvk::get_default<VkPipelineColorBlendAttachmentState>();
         pipelineColorBlendAttachmentState.blendEnable = VK_TRUE;
-#if 0
+#if 1
         pipelineColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
         pipelineColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
         pipelineColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;

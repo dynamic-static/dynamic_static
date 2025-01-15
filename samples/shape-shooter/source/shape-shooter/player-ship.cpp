@@ -95,15 +95,23 @@ void PlayerShip::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
 void PlayerShip::make_exhaust_fire()
 {
     auto totalTime = Context::instance().gameClock.total<gvk::system::Seconds<float>>();
+    (void)totalTime;
     if (0.1f < glm::length2(velocity)) {
         // TODO : Documentation
         orientation = get_orientation(velocity);
         auto particleRotation = glm::angleAxis(orientation, glm::vec3{ 0, 1, 0 });
+        (void)particleRotation;
 
         // TODO : Update this comment to be world units/second
         // The primary velocity of the paritcles is 3 pixels/frame in the direction
         //  opposite to which the ship is travelling.
+#if 0
         auto baseVelocity = velocity * (-3.0f / glm::length(velocity)); // scale_to()
+#else
+        auto baseVelocity = velocity * (-3.0f / glm::length(velocity));
+#endif
+
+
         // Calculate the sideways velocity for the two side streams.  The direction is
         //  perpendicular to the ship's velocity and the magnitude varies sinusoidally.
         auto perpendicularVelocity = glm::vec3(baseVelocity.z, baseVelocity.y, -baseVelocity.x) * (0.6f * std::sin(totalTime * 10.0f));

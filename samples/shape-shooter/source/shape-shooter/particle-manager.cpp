@@ -43,6 +43,7 @@ void ParticleManager::add(const Particle& particle)
 void ParticleManager::update()
 {
     const auto& context = Context::instance();
+    auto deltaTime = context.gameClock.elapsed<gvk::system::Seconds<float>>();
     auto playFieldHalfExtent = context.playField.extent * 0.5f;
     for (size_t i = 0; i < mParticles.count();) {
         auto& particle = mParticles[i];
@@ -50,7 +51,7 @@ void ParticleManager::update()
 #if 1
         // TODO : Documentation
         auto speed = glm::length(particle.velocity);
-        particle.position += particle.velocity; // * deltaTime;
+        particle.position += particle.velocity * deltaTime;
         (void)speed;
 #endif
 
@@ -89,22 +90,38 @@ void ParticleManager::update()
         // TODO : Blackholes
 
         // TODO : Documentation
-        if (std::abs(particle.velocity.x) + std::abs(particle.velocity.y) < 0.00000000001f) {
-            particle.velocity = { };
-        } else if (particle.type == Particle::Type::Enemy) {
-            particle.velocity *= 0.94f;
-        } else {
-            particle.velocity *= 0.96f + glm::mod(std::abs(particle.position.x), 0.04f);
+        if (deltaTime) {
+            if (std::abs(particle.velocity.x) + std::abs(particle.velocity.y) < 0.00000000001f) {
+                particle.velocity = { };
+            } else if (particle.type == Particle::Type::Enemy) {
+                particle.velocity *= 0.94f;
+                // particle.velocity *= /*particle.damping*/ (0.94f / OneOverSixty) * deltaTime;
+            } else {
+                particle.velocity *= 0.96f + glm::mod(std::abs(particle.position.x), 0.04f);
+                // particle.velocity *= /*particle.damping*/ (0.96f / OneOverSixty) * deltaTime;
+            }
         }
 
         // TODO : Documentation
-        particle.percentLife -= 1.0f / particle.duration;
+#if 1
+        particle.percentLife -= 1.0f / particle.duration * deltaTime;
         if (particle.percentLife <= 0) {
             std::swap(particle, mParticles.back());
             mParticles.pop_back();
         } else {
             ++i;
         }
+#else
+        if (0 < particle.duration) {
+            particle.duration -= deltaTime;
+        }
+        if (particle.duration <= 0) {
+            std::swap(particle, mParticles.back());
+            mParticles.pop_back();
+        } else {
+            ++i;
+        }
+#endif
     }
 }
 

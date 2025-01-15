@@ -54,10 +54,9 @@ void Bullet::update()
         for (uint32_t i = 0; i < 30; ++i) {
             Particle particle{ };
             particle.position = position;
-            particle.velocity = get_random_vector(0, 9);
+            particle.velocity = get_random_vector(0, 9 / OneOverSixty);
             particle.color = gvk::math::Color::LightBlue;
-            particle.duration = 50;
-            particle.scale = { 1, 1, 1 };
+            particle.duration = 50.0f * OneOverSixty;
             particle.type = Particle::Type::Bullet;
             context.particleManager.add(particle);
         }
