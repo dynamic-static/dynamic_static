@@ -105,24 +105,17 @@ void PlayerShip::make_exhaust_fire()
         // TODO : Update this comment to be world units/second
         // The primary velocity of the paritcles is 3 pixels/frame in the direction
         //  opposite to which the ship is travelling.
-#if 0
-        auto baseVelocity = velocity * (-3.0f / glm::length(velocity)); // scale_to()
-#else
         auto baseVelocity = scale_to(velocity, -3.0f);
-#endif
-
 
         // Calculate the sideways velocity for the two side streams.  The direction is
         //  perpendicular to the ship's velocity and the magnitude varies sinusoidally.
         auto perpendicularVelocity = glm::vec3(baseVelocity.z, baseVelocity.y, -baseVelocity.x) * (0.6f * std::sin(totalTime * 10.0f));
 
-        std::cout << "{ " << baseVelocity.x << ", " << baseVelocity.y << ", " << baseVelocity.z << " } " << (0.6f * std::sin(totalTime * 10.0f)) << std::endl;
-
         // TODO : Documentation
         Particle particle{ };
         particle.type = Particle::Type::Enemy;
         particle.position = position; // +glm::vec3{ -25, 0, 0 } *particleRotation; // Position of the ship's exhaust pipe
-        particle.duration = 60.0f;
+        particle.duration = 60.0f * OneOverSixty;
         particle.scale = { 0.5f, 1.0f, 1.0f };
         auto& particleManager = Context::instance().particleManager;
         float alpha = 0.7f;
