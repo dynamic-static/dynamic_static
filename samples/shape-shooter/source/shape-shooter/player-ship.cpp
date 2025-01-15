@@ -108,13 +108,15 @@ void PlayerShip::make_exhaust_fire()
 #if 0
         auto baseVelocity = velocity * (-3.0f / glm::length(velocity)); // scale_to()
 #else
-        auto baseVelocity = velocity * (-3.0f / glm::length(velocity));
+        auto baseVelocity = scale_to(velocity, -3.0f);
 #endif
 
 
         // Calculate the sideways velocity for the two side streams.  The direction is
         //  perpendicular to the ship's velocity and the magnitude varies sinusoidally.
         auto perpendicularVelocity = glm::vec3(baseVelocity.z, baseVelocity.y, -baseVelocity.x) * (0.6f * std::sin(totalTime * 10.0f));
+
+        std::cout << "{ " << baseVelocity.x << ", " << baseVelocity.y << ", " << baseVelocity.z << " } " << (0.6f * std::sin(totalTime * 10.0f)) << std::endl;
 
         // TODO : Documentation
         Particle particle{ };
@@ -127,7 +129,7 @@ void PlayerShip::make_exhaust_fire()
 
         // Middle particle stream
         auto middleColor = glm::vec4(1.0f, 187.0f / 255.0f, 30.0f / 255.0f, 1.0f); // Orange yellow
-        particle.velocity = baseVelocity + get_random_vector(0, 1);
+        particle.velocity = (baseVelocity + get_random_vector(0, 1)) / OneOverSixty;
         particle.sprite = Sprite::Laser;
         particle.color = gvk::math::Color::White * alpha;
         particleManager.add(particle);
@@ -140,17 +142,17 @@ void PlayerShip::make_exhaust_fire()
         auto perpendicularVelocity1 = baseVelocity - perpendicularVelocity + get_random_vector(0.0f, 0.3f);
         particle.sprite = Sprite::Laser;
         particle.color = gvk::math::Color::White * alpha;
-        particle.velocity = perpendicularVelocity0;
+        particle.velocity = perpendicularVelocity0 / OneOverSixty;
         particleManager.add(particle);
-        particle.velocity = perpendicularVelocity1;
+        particle.velocity = perpendicularVelocity1 / OneOverSixty;
         particleManager.add(particle);
 
         auto sideColor = glm::vec4(200.0f / 255.0f, 38.0f / 255.0f, 9.0f / 255.0f, 1.0f); // Deep red
         particle.sprite = Sprite::Glow;
         particle.color = sideColor * alpha;
-        particle.velocity = perpendicularVelocity0;
+        particle.velocity = perpendicularVelocity0 / OneOverSixty;
         particleManager.add(particle);
-        particle.velocity = perpendicularVelocity1;
+        particle.velocity = perpendicularVelocity1 / OneOverSixty;
         particleManager.add(particle);
     }
 }

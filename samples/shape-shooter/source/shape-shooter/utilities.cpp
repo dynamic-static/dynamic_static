@@ -48,6 +48,11 @@ glm::vec3 from_polar(float angle, float magnitude)
     return glm::vec3{ glm::cos(angle), 0, glm::sin(angle) } * magnitude;
 }
 
+glm::vec3 scale_to(const glm::vec3& v, float length)
+{
+    return v * (length / glm::length(v));
+}
+
 float from_1920x1080(float base, float value)
 {
     return value / 1920 * base;
