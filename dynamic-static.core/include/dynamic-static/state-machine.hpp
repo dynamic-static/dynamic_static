@@ -55,9 +55,8 @@ public:
         (void)pExiting;
     }
 
-    inline virtual void update(State::Machine& stateMachine, UpdateArgsTypes&&...)
+    inline virtual void update(UpdateArgsTypes&&...)
     {
-        (void)stateMachine;
     }
 
     inline virtual void exit(const State* pEntering)
@@ -73,17 +72,15 @@ public:
         Machine& operator=(Machine&&) = default;
 
         template <typename StateType, typename ...CtorArgsTypes>
-        inline void add_state(CtorArgsTypes&&... ctorArgs)
+        inline bool add_state(CtorArgsTypes&&... ctorArgs)
         {
-            auto inserted = mStates.insert({ get_type_id<StateType>(), std::make_unique<StateType>(std::forward<CtorArgsTypes>(ctorArgs)...) }).second;
-            (void)inserted;
-            assert(inserted);
+            return mStates.insert({ get_type_id<StateType>(), std::make_unique<StateType>(std::forward<CtorArgsTypes>(ctorArgs)...) }).second;
         }
 
         template <typename StateType = void>
         inline void set_state()
         {
-            auto pExiting = mpState;
+            auto pExiting = mpCurrentState;
             auto itr = mStates.find(get_type_id<StateType>());
             auto pEntering = itr != mStates.end() ? itr->second.get() : nullptr;
 
@@ -91,7 +88,7 @@ public:
                 pExiting->exit(pEntering);
             }
 
-            mpState = pEntering;
+            mpCurrentState = pEntering;
 
             if (pEntering) {
                 pEntering->enter(pExiting);
@@ -100,14 +97,14 @@ public:
 
         inline void update(UpdateArgsTypes&&... updateArgs)
         {
-            if (mpState) {
-                mpState->update(*this, std::forward<UpdateArgsTypes>(updateArgs)...);
+            if (mpCurrentState) {
+                mpCurrentState->update(std::forward<UpdateArgsTypes>(updateArgs)...);
             }
         }
 
     private:
         std::unordered_map<TypeId, std::unique_ptr<State>> mStates;
-        State* mpState { };
+        State* mpCurrentState { };
 
         Machine(const Machine&) = delete;
         Machine& operator=(const Machine&) = delete;

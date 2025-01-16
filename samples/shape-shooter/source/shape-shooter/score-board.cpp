@@ -84,6 +84,16 @@ void ScoreBoard::reset()
     mFontRenderer = { };
 }
 
+ScoreBoard::State ScoreBoard::get_state() const
+{
+    return mState;
+}
+
+void ScoreBoard::set_state(State state)
+{
+    mState = state;
+}
+
 const dst::gfx::Renderer<dst::text::Font>& ScoreBoard::get_font_renderer() const
 {
     return mFontRenderer;
@@ -125,7 +135,11 @@ void ScoreBoard::update()
 {
     auto deltaTime = Context::instance().gameClock.elapsed<gvk::system::Seconds<float>>();
 
-    mScoreTextMesh.set_text(std::to_string(mScore));
+    if (mState == State::Attract) {
+        mScoreTextMesh.set_text("Shape Shooter");
+    } else {
+        mScoreTextMesh.set_text(std::to_string(mScore));
+    }
     auto pTextMeshRenderer = get_text_mesh_renderer(mScoreTextMesh);
     pTextMeshRenderer->transform.rotation = glm::angleAxis(glm::radians(180.0f), glm::vec3{ 0, 1, 0 });
     pTextMeshRenderer->transform.translation.y = 64;
@@ -158,7 +172,9 @@ void ScoreBoard::record_draw_cmds(const gvk::CommandBuffer& commandBuffer, const
     dispatchTable.gvkCmdBindDescriptorSets(commandBuffer, bindPoint, fontPipelineLayout, 1, 1, &fontDescriptorSet, 0, nullptr);
     get_text_mesh_renderer(mScoreTextMesh)->record_draw_cmds(commandBuffer, mFontRenderer);
     get_text_mesh_renderer(mHighScoreTextMesh)->record_draw_cmds(commandBuffer, mFontRenderer);
-    get_text_mesh_renderer(mLivesTextMesh)->record_draw_cmds(commandBuffer, mFontRenderer);
+    if (mState == State::Play) {
+        get_text_mesh_renderer(mLivesTextMesh)->record_draw_cmds(commandBuffer, mFontRenderer);
+    }
 }
 
 int ScoreBoard::load_high_score()

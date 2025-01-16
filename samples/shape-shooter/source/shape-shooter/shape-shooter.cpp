@@ -334,7 +334,7 @@ int main(int, const char*[])
             static bool lockScoreBoardCamera = false;
             if (input.keyboard.pressed(gvk::system::Key::L)) {
                 lockScoreBoardCamera = !lockScoreBoardCamera;
-#if 0
+#if 1
                 const auto& t = shapeShooterContext.gameCamera.transform;
                 const auto& p = t.translation;
                 const auto& r = glm::eulerAngles(t.rotation) * 180.0f / glm::pi<float>();
@@ -348,6 +348,38 @@ int main(int, const char*[])
             }
             if (!lockScoreBoardCamera) {
                 shapeShooterContext.scoreBoardCamera = shapeShooterContext.gameCamera;
+            }
+            if (input.keyboard.pressed(gvk::system::Key::K)) {
+                shapeShooterContext.gameCamera.transform.translation = { };
+                shapeShooterContext.gameCamera.transform.rotation = { 1, 0, 0, 0 };
+                shapeShooterContext.gameCamera.transform.scale = { 1, 1, 1 };
+            }
+            if (input.keyboard.pressed(gvk::system::Key::O)) {
+                lockScoreBoardCamera = true;
+                auto& scoreBoardCameraTransform = shapeShooterContext.scoreBoardCamera.transform;
+                scoreBoardCameraTransform.translation = { -205.596f, -53.252f, -602.860f };
+                glm::vec3 scoreBoardCameraRotation = { 8.594f, -20.054f, 0.0f };
+                scoreBoardCameraRotation.x = glm::radians(scoreBoardCameraRotation.x);
+                scoreBoardCameraRotation.y = glm::radians(scoreBoardCameraRotation.y);
+                scoreBoardCameraRotation.z = glm::radians(scoreBoardCameraRotation.z);
+                scoreBoardCameraTransform.rotation = scoreBoardCameraRotation;
+            }
+            if (input.keyboard.pressed(gvk::system::Key::OEM_SemiColon)) {
+                auto scoreBoardState = shapeShooterContext.scoreBoard.get_state();
+                switch (scoreBoardState) {
+                case shape_shooter::ScoreBoard::State::Attract: {
+                    shapeShooterContext.scoreBoard.set_state(shape_shooter::ScoreBoard::State::Play);
+                } break;
+                case shape_shooter::ScoreBoard::State::Play: {
+                    shapeShooterContext.scoreBoard.set_state(shape_shooter::ScoreBoard::State::GameOver);
+                } break;
+                case shape_shooter::ScoreBoard::State::GameOver: {
+                    shapeShooterContext.scoreBoard.set_state(shape_shooter::ScoreBoard::State::Attract);
+                } break;
+                default: {
+                    assert(false);
+                } break;
+                }
             }
             update_camera_uniform_buffer(shapeShooterContext.gameCamera, shapeShooterContext.gameCameraResources.first);
             update_camera_uniform_buffer(shapeShooterContext.scoreBoardCamera, shapeShooterContext.scoreBoardCameraResources.first);
@@ -438,6 +470,16 @@ int main(int, const char*[])
 #if 1
                     ImGui::ShowDemoWindow();
 #endif
+                    auto& scoreBoardCameraTransform = shapeShooterContext.scoreBoardCamera.transform;
+                    ImGui::DragFloat3("Score Board Camera Position", (float*)&scoreBoardCameraTransform.translation);
+                    auto scoreBoardCameraRotation = glm::eulerAngles(scoreBoardCameraTransform.rotation) * 180.0f / glm::pi<float>();
+                    if (ImGui::DragFloat3("Score Board Camera Rotation", (float*)&scoreBoardCameraRotation)) {
+                        scoreBoardCameraRotation.x = glm::radians(scoreBoardCameraRotation.x);
+                        scoreBoardCameraRotation.y = glm::radians(scoreBoardCameraRotation.y);
+                        scoreBoardCameraRotation.z = glm::radians(scoreBoardCameraRotation.z);
+                        scoreBoardCameraTransform.rotation = scoreBoardCameraRotation;
+                    }
+
                     ImGui::DragFloat("spawnInExplosionForce", &spawnInExplosionForce);
                     shape_shooter::Context::instance().grid.draw_gui();
                     guiRenderer.end_gui(acquiredImageInfo.index);

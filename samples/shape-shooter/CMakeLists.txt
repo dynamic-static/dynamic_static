@@ -43,6 +43,7 @@ dst_add_executable(
         "${includePath}/player-status.hpp"
         "${includePath}/ring-buffer.hpp"
         "${includePath}/score-board.hpp"
+        "${includePath}/shape-shooter.hpp"
         "${includePath}/utilities.hpp"
     sourceFiles
         "${sourcePath}/audio.cpp"
