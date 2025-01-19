@@ -67,8 +67,10 @@ public:
     ParticleManager particleManager;
     gvk::math::Camera gameCamera;
     std::pair<gvk::Buffer, gvk::DescriptorSet> gameCameraResources;
+#if 0
     gvk::math::Camera scoreBoardCamera;
     std::pair<gvk::Buffer, gvk::DescriptorSet> scoreBoardCameraResources;
+#endif
     Audio audio;
     Grid grid;
 

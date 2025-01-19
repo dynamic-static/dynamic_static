@@ -36,16 +36,24 @@ glm::vec3 InputManager::get_movement_direction() const
 {
     glm::vec3 direction{ };
     // TODO : Thmubstick
-    if (mInput.keyboard.down(gvk::system::Key::F)) { // Left
+    if (mInput.keyboard.down(gvk::system::Key::A) ||
+        mInput.keyboard.down(gvk::system::Key::LeftArrow) ||
+        mInput.keyboard.down(gvk::system::Key::NumPad4)) { // Left
         direction.x += 1;
     }
-    if (mInput.keyboard.down(gvk::system::Key::H)) { // Right
+    if (mInput.keyboard.down(gvk::system::Key::D) ||
+        mInput.keyboard.down(gvk::system::Key::RightArrow) ||
+        mInput.keyboard.down(gvk::system::Key::NumPad6)) { // Right
         direction.x -= 1;
     }
-    if (mInput.keyboard.down(gvk::system::Key::T)) { // Forward
+    if (mInput.keyboard.down(gvk::system::Key::W) ||
+        mInput.keyboard.down(gvk::system::Key::UpArrow) ||
+        mInput.keyboard.down(gvk::system::Key::NumPad8)) { // Forward
         direction.z += 1;
     }
-    if (mInput.keyboard.down(gvk::system::Key::G)) { // Backward
+    if (mInput.keyboard.down(gvk::system::Key::S) ||
+        mInput.keyboard.down(gvk::system::Key::DownArrow) ||
+        mInput.keyboard.down(gvk::system::Key::NumPad5)) { // Backward
         direction.z -= 1;
     }
     return direction.x || direction.y || direction.z ? glm::normalize(direction) : glm::vec3{ };

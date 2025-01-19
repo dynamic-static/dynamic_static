@@ -74,7 +74,7 @@ public:
     void apply_explosive_force(float force, const glm::vec3& position, float radius);
     void update(float deltaTime);
     void record_draw_cmds(const gvk::CommandBuffer& commandBuffer, const gvk::math::Camera& camera, const glm::vec2& resolution) const;
-    void draw_gui();
+    void on_gui();
 
 private:
     void create_grid();

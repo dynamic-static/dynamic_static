@@ -189,7 +189,7 @@ void Grid::record_draw_cmds(const gvk::CommandBuffer& commandBuffer, const gvk::
     mLineRenderer.record_draw_cmds(commandBuffer, camera, resolution);
 }
 
-void Grid::draw_gui()
+void Grid::on_gui()
 {
     auto stiffness = mStiffness;
     if (ImGui::DragFloat("Spring stiffness", &mStiffness)) {

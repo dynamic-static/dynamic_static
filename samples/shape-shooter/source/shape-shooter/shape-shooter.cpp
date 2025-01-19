@@ -174,7 +174,7 @@ int main(int, const char*[])
 
         // These variables will be controlled via gui widgets
         bool showGui = false;
-        int lookType = 0;
+        // int lookType = 0;
 
         ///////////////////////////////////////////////////////////////////////////////
         // CoordinateRenderer
@@ -210,11 +210,11 @@ int main(int, const char*[])
         shapeShooterContext.scoreBoardCamera.transform.translation = { 12.1287f, 32.5891f, -438.474f };
         shapeShooterContext.scoreBoardCamera.transform.rotation = glm::quat(glm::vec3{ 16.0f, -45.0f, -2.0f } * glm::pi<float>() / 180.0f);
 #endif
-
-        shapeShooterContext.gameCamera.farPlane = 10000.0f;
-        shapeShooterContext.gameCamera.transform.translation = { 0, 2, -7 };
         gvk::math::FreeCameraController cameraController;
+        cameraController.fieldOfViewMin = FLT_MIN;
+        cameraController.fieldOfViewMax = FLT_MAX;
         cameraController.set_camera(&shapeShooterContext.gameCamera);
+        shape_shooter::reset_camera(&shapeShooterContext.gameCamera);
 
         auto cameraDescriptorPoolSize = gvk::get_default<VkDescriptorPoolSize>();
         cameraDescriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -231,7 +231,9 @@ int main(int, const char*[])
         const auto& fontRendererDescriptorSetLayouts = fontRendererPipelineLayout.get<gvk::DescriptorSetLayouts>();
         gvk_result(fontRendererDescriptorSetLayouts.empty() ? VK_ERROR_INITIALIZATION_FAILED : VK_SUCCESS);
         gvk_result(create_camera_resources(cameraDescriptorPool, fontRendererDescriptorSetLayouts[0], shapeShooterContext.gameCameraResources));
+#if 0
         gvk_result(create_camera_resources(cameraDescriptorPool, fontRendererDescriptorSetLayouts[0], shapeShooterContext.scoreBoardCameraResources));
+#endif
 
         ///////////////////////////////////////////////////////////////////////////////
         // Grid
@@ -242,6 +244,7 @@ int main(int, const char*[])
         ///////////////////////////////////////////////////////////////////////////////
 
         float spawnInExplosionForce = 5000.0f;
+        (void)spawnInExplosionForce;
         dst::RandomNumberGenerator rng;
 
         bool updateGameClock = true;
@@ -271,15 +274,17 @@ int main(int, const char*[])
 
             // When ImGui wants mouse/keyboard input, input should be ignored by the scene
             if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard) {
+
+                // Update camera
                 gvk::math::FreeCameraController::UpdateInfo cameraControllerUpdateInfo {
                     /* .deltaTime           = */ deltaTime,
-                    /* .moveUp              = */ input.keyboard.down(gvk::system::Key::Q),
-                    /* .moveDown            = */ input.keyboard.down(gvk::system::Key::E),
-                    /* .moveLeft            = */ input.keyboard.down(gvk::system::Key::A),
-                    /* .moveRight           = */ input.keyboard.down(gvk::system::Key::D),
-                    /* .moveForward         = */ input.keyboard.down(gvk::system::Key::W),
-                    /* .moveBackward        = */ input.keyboard.down(gvk::system::Key::S),
-                    /* .moveSpeedMultiplier = */ input.keyboard.down(gvk::system::Key::LeftShift) ? 24.0f : 1.0f,
+                    /* .moveUp              = */ input.keyboard.down(gvk::system::Key::R),
+                    /* .moveDown            = */ input.keyboard.down(gvk::system::Key::Y),
+                    /* .moveLeft            = */ input.keyboard.down(gvk::system::Key::F),
+                    /* .moveRight           = */ input.keyboard.down(gvk::system::Key::H),
+                    /* .moveForward         = */ input.keyboard.down(gvk::system::Key::T),
+                    /* .moveBackward        = */ input.keyboard.down(gvk::system::Key::G),
+                    /* .moveSpeedMultiplier = */ 32.0f,
                     /* .lookDelta           = */ { input.mouse.position.delta()[0], input.mouse.position.delta()[1] },
                     /* .fieldOfViewDelta    = */ input.mouse.scroll.delta()[1],
                 };
@@ -289,10 +294,33 @@ int main(int, const char*[])
                 } else {
                     gvkSystemSurface.set(gvk::system::Surface::CursorMode::Visible);
                 }
+#if 0
                 if (input.mouse.buttons.pressed(gvk::system::Mouse::Button::Right)) {
                     shapeShooterContext.gameCamera.fieldOfView = 60.0f;
                 }
+#endif
                 cameraController.update(cameraControllerUpdateInfo);
+
+                // Pause/unpause game
+                if (input.keyboard.pressed(gvk::system::Key::P)) {
+                    updateGameClock = !updateGameClock;
+                    if (!updateGameClock) {
+                        shapeShooterContext.gameClock = { };
+                    }
+                }
+
+#if 0
+                // TODO : Documentation
+                static bool sOnce;
+                if (!sOnce || input.keyboard.pressed(gvk::system::Key::Backspace)) {
+                    sOnce = true;
+                    lookType = lookType ? 0 : 1;
+                    if (lookType) {
+                        shapeShooterContext.gameCamera.transform.translation = { 0, 965, 0 };
+                        shapeShooterContext.gameCamera.transform.rotation = glm::normalize(glm::angleAxis(glm::radians(90.0f), glm::vec3{ 1, 0, 0 }));
+                    }
+                }
+#endif
             }
 
 #if 0
@@ -314,75 +342,10 @@ int main(int, const char*[])
             }
 #endif
 
-            static bool sOnce;
-            if (!sOnce || input.keyboard.pressed(gvk::system::Key::Backspace)) {
-                sOnce = true;
-                lookType = lookType ? 0 : 1;
-                if (lookType) {
-                    shapeShooterContext.gameCamera.transform.translation = { 0, 965, 0 };
-                    shapeShooterContext.gameCamera.transform.rotation = glm::normalize(glm::angleAxis(glm::radians(90.0f), glm::vec3{ 1, 0, 0 }));
-                }
-            }
-
-            if (input.keyboard.pressed(gvk::system::Key::P)) {
-                updateGameClock = !updateGameClock;
-                if (!updateGameClock) {
-                    shapeShooterContext.gameClock = { };
-                }
-            }
-
-            static bool lockScoreBoardCamera = false;
-            if (input.keyboard.pressed(gvk::system::Key::L)) {
-                lockScoreBoardCamera = !lockScoreBoardCamera;
-#if 1
-                const auto& t = shapeShooterContext.gameCamera.transform;
-                const auto& p = t.translation;
-                const auto& r = glm::eulerAngles(t.rotation) * 180.0f / glm::pi<float>();
-                const auto& s = t.scale;
-                std::cout << "================================================================================" << std::endl;
-                std::cout << "translation : {" << p.x << "," << p.y << "," << p.z << "}" << std::endl;
-                std::cout << "rotation    : {" << r.x << "," << r.y << "," << r.z << "}" << std::endl;
-                std::cout << "scale       : {" << s.x << "," << s.y << "," << s.z << "}" << std::endl;
-                std::cout << "================================================================================" << std::endl;
-#endif
-            }
-            if (!lockScoreBoardCamera) {
-                shapeShooterContext.scoreBoardCamera = shapeShooterContext.gameCamera;
-            }
-            if (input.keyboard.pressed(gvk::system::Key::K)) {
-                shapeShooterContext.gameCamera.transform.translation = { };
-                shapeShooterContext.gameCamera.transform.rotation = { 1, 0, 0, 0 };
-                shapeShooterContext.gameCamera.transform.scale = { 1, 1, 1 };
-            }
-            if (input.keyboard.pressed(gvk::system::Key::O)) {
-                lockScoreBoardCamera = true;
-                auto& scoreBoardCameraTransform = shapeShooterContext.scoreBoardCamera.transform;
-                scoreBoardCameraTransform.translation = { -205.596f, -53.252f, -602.860f };
-                glm::vec3 scoreBoardCameraRotation = { 8.594f, -20.054f, 0.0f };
-                scoreBoardCameraRotation.x = glm::radians(scoreBoardCameraRotation.x);
-                scoreBoardCameraRotation.y = glm::radians(scoreBoardCameraRotation.y);
-                scoreBoardCameraRotation.z = glm::radians(scoreBoardCameraRotation.z);
-                scoreBoardCameraTransform.rotation = scoreBoardCameraRotation;
-            }
-            if (input.keyboard.pressed(gvk::system::Key::OEM_SemiColon)) {
-                auto scoreBoardState = shapeShooterContext.scoreBoard.get_state();
-                switch (scoreBoardState) {
-                case shape_shooter::ScoreBoard::State::Attract: {
-                    shapeShooterContext.scoreBoard.set_state(shape_shooter::ScoreBoard::State::Play);
-                } break;
-                case shape_shooter::ScoreBoard::State::Play: {
-                    shapeShooterContext.scoreBoard.set_state(shape_shooter::ScoreBoard::State::GameOver);
-                } break;
-                case shape_shooter::ScoreBoard::State::GameOver: {
-                    shapeShooterContext.scoreBoard.set_state(shape_shooter::ScoreBoard::State::Attract);
-                } break;
-                default: {
-                    assert(false);
-                } break;
-                }
-            }
             update_camera_uniform_buffer(shapeShooterContext.gameCamera, shapeShooterContext.gameCameraResources.first);
+#if 0
             update_camera_uniform_buffer(shapeShooterContext.scoreBoardCamera, shapeShooterContext.scoreBoardCameraResources.first);
+#endif
 
             ///////////////////////////////////////////////////////////////////////////////
             // CoordinateRenderer
@@ -467,9 +430,13 @@ int main(int, const char*[])
                     // Call guiRenderer.begin_gui().  Note that all ImGui widgets must be handled
                     //  between calls to begin_gui()/end_gui()
                     guiRenderer.begin_gui(guiRendererBeginInfo);
-#if 1
+#if 0
                     ImGui::ShowDemoWindow();
 #endif
+                    shape_shooter::camera_gui("Camera", &shapeShooterContext.gameCamera);
+                    shapeShooterContext.scoreBoard.on_gui();
+
+#if 0
                     auto& scoreBoardCameraTransform = shapeShooterContext.scoreBoardCamera.transform;
                     ImGui::DragFloat3("Score Board Camera Position", (float*)&scoreBoardCameraTransform.translation);
                     auto scoreBoardCameraRotation = glm::eulerAngles(scoreBoardCameraTransform.rotation) * 180.0f / glm::pi<float>();
@@ -479,9 +446,11 @@ int main(int, const char*[])
                         scoreBoardCameraRotation.z = glm::radians(scoreBoardCameraRotation.z);
                         scoreBoardCameraTransform.rotation = scoreBoardCameraRotation;
                     }
-
+#endif
+#if 0
                     ImGui::DragFloat("spawnInExplosionForce", &spawnInExplosionForce);
-                    shape_shooter::Context::instance().grid.draw_gui();
+#endif
+                    shape_shooter::Context::instance().grid.on_gui();
                     guiRenderer.end_gui(acquiredImageInfo.index);
                 }
 
@@ -534,9 +503,14 @@ int main(int, const char*[])
 #endif
 
                     // ScoreBoard
+#if 0
                     const auto& scoreBoardCameraDescriptorSet = shapeShooterContext.scoreBoardCameraResources.second;
                     vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &scoreBoardCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
                     shape_shooter::Context::instance().scoreBoard.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.scoreBoardCamera);
+#else
+                    vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
+                    shape_shooter::Context::instance().scoreBoard.record_draw_cmds(acquiredImageInfo.commandBuffer);
+#endif
                 }
 
                 // If the gvk::gui::Renderer is enabled, record cmds to render it
@@ -588,7 +562,7 @@ int main(int, const char*[])
             static decltype(clock.elapsed<gvk::system::Seconds<>>()) sFpsTimer;
             sFpsTimer += clock.elapsed<gvk::system::Seconds<>>();
             if (1.0f <= sFpsTimer) {
-                std::cout << sFrameCount << " / " << sFpsTimer << std::endl;
+                // std::cout << sFrameCount << " / " << sFpsTimer << std::endl;
                 sFrameCount = 0;
                 sFpsTimer = 0;
             }

@@ -43,6 +43,11 @@ float from_1920x1080(float base, float value);
 glm::vec3 ray_plane_intersection(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const glm::vec3& planePoint, const glm::vec3& planeNormal);
 glm::vec3 get_random_vector(float minLength, float maxLength);
 glm::vec4 hsv_to_color(float hue, float saturation, float value, float alpha = 1.0f);
+bool combo_gui(const char* pEnumName, size_t enumeratorCount, const char* const* pEnumeratorNames, size_t* pSelectionIndex);
+void transform_gui(const char* pName, gvk::math::Transform* pTransform);
+void reset_camera(gvk::math::Camera* pCamera, gvk::math::Camera::ProjectionMode projectionMode);
+void reset_camera(gvk::math::Camera* pCamera);
+void camera_gui(const char* pName, gvk::math::Camera* pCamera);
 
 template <typename T>
 inline uint64_t get_type_id()

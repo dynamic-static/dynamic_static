@@ -53,13 +53,31 @@ VkResult ScoreBoard::create(const gvk::Context& gvkContext, const gvk::RenderPas
         pScoreBoard->mScoreTextMesh.set_font(pScoreBoard->mspFont);
         pScoreBoard->mHighScoreTextMesh.set_font(pScoreBoard->mspFont);
         pScoreBoard->mLivesTextMesh.set_font(pScoreBoard->mspFont);
+
         auto createTextMeshRenderer = [&](const auto& textMesh, auto& renderer)
         {
             return dst::gfx::Renderer<dst::text::Mesh>::create(gvkContext.get<gvk::Devices>()[0], textMesh, pScoreBoard->mFontRenderer, &renderer);
         };
+
+        glm::quat rotation = glm::radians(glm::vec3(90, 0, -180));
+
         gvk_result(pScoreBoard->mScoreTextMesh.create_renderer<dst::gfx::Renderer<dst::text::Mesh>>(createTextMeshRenderer));
+        auto& scoreTransform = get_text_mesh_renderer(pScoreBoard->mScoreTextMesh)->transform;
+        scoreTransform.translation = { 820, 128, 418 };
+        scoreTransform.rotation = rotation;
+
         gvk_result(pScoreBoard->mHighScoreTextMesh.create_renderer<dst::gfx::Renderer<dst::text::Mesh>>(createTextMeshRenderer));
+        auto& highScoreTransform = get_text_mesh_renderer(pScoreBoard->mHighScoreTextMesh)->transform;
+        highScoreTransform.translation = { 792, 128, 382 };
+        highScoreTransform.rotation = rotation;
+        highScoreTransform.scale = { 0.5f, 0.5f, 0.5f };
+
         gvk_result(pScoreBoard->mLivesTextMesh.create_renderer<dst::gfx::Renderer<dst::text::Mesh>>(createTextMeshRenderer));
+        auto& livesTransform = get_text_mesh_renderer(pScoreBoard->mLivesTextMesh)->transform;
+        livesTransform.translation = { 822, 128, 354 };
+        livesTransform.rotation = rotation;
+        livesTransform.scale = { 0.5f, 0.5f, 0.5f };
+
         pScoreBoard->reset_score();
     } gvk_result_scope_end;
     return gvkResult;
@@ -140,29 +158,49 @@ void ScoreBoard::update()
     } else {
         mScoreTextMesh.set_text(std::to_string(mScore));
     }
-    auto pTextMeshRenderer = get_text_mesh_renderer(mScoreTextMesh);
-    pTextMeshRenderer->transform.rotation = glm::angleAxis(glm::radians(180.0f), glm::vec3{ 0, 1, 0 });
-    pTextMeshRenderer->transform.translation.y = 64;
     mScoreTextMesh.update(deltaTime);
-
     mHighScoreTextMesh.set_text("hi : " + std::to_string(mHighScore));
-    pTextMeshRenderer = get_text_mesh_renderer(mHighScoreTextMesh);
-    pTextMeshRenderer->transform.rotation = glm::angleAxis(glm::radians(180.0f), glm::vec3{ 0, 1, 0 });
-    pTextMeshRenderer->transform.translation.y = 32;
-    pTextMeshRenderer->transform.scale = { 0.5f, 0.5f, 0.5f };
     mHighScoreTextMesh.update(deltaTime);
-
     mLivesTextMesh.set_text("lives : " + std::to_string(3));
-    pTextMeshRenderer = get_text_mesh_renderer(mLivesTextMesh);
-    pTextMeshRenderer->transform.rotation = glm::angleAxis(glm::radians(180.0f), glm::vec3{ 0, 1, 0 });
-    pTextMeshRenderer->transform.translation.y = 8;
-    pTextMeshRenderer->transform.scale = { 0.5f, 0.5f, 0.5f };
     mLivesTextMesh.update(deltaTime);
 }
 
-void ScoreBoard::record_draw_cmds(const gvk::CommandBuffer& commandBuffer, const gvk::math::Camera& camera) const
+void ScoreBoard::on_gui()
 {
-    (void)camera;
+    if (ImGui::CollapsingHeader("ScoreBoard")) {
+        ImGui::Indent();
+        {
+            static const std::array<const char*, (size_t)State::Count> scStateNames{ "Attract", "Play", "GameOver", };
+#if 0
+            if (ImGui::BeginCombo("State", scStateNames[(size_t)mState])) {
+                for (size_t state_i = 0; state_i < scStateNames.size(); ++state_i) {
+                    ImGui::PushID((int)state_i);
+                    auto selected = (size_t)mState == state_i;
+                    if (ImGui::Selectable(scStateNames[(size_t)state_i], selected)) {
+                        mState = (State)state_i;
+                    }
+                    if (selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::EndCombo();
+            }
+#else
+            auto stateIndex = (size_t)mState;
+            combo_gui("State", scStateNames.size(), scStateNames.data(), &stateIndex);
+            mState = (State)stateIndex;
+#endif
+            transform_gui("Score transform", &get_text_mesh_renderer(mScoreTextMesh)->transform);
+            transform_gui("HighScore transform", &get_text_mesh_renderer(mHighScoreTextMesh)->transform);
+            transform_gui("Lives transform", &get_text_mesh_renderer(mLivesTextMesh)->transform);
+        }
+        ImGui::Unindent();
+    }
+}
+
+void ScoreBoard::record_draw_cmds(const gvk::CommandBuffer& commandBuffer) const
+{
     auto bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     const auto& fontPipeline = mFontRenderer.get_pipeline();
     const auto& fontPipelineLayout = fontPipeline.get<gvk::PipelineLayout>();

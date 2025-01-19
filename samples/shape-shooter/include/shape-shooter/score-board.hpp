@@ -40,6 +40,7 @@ public:
         Attract,
         Play,
         GameOver,
+        Count,
     };
 
     ScoreBoard() = default;
@@ -58,7 +59,8 @@ public:
     void reset_score();
     void reset_multiplier();
     void update();
-    void record_draw_cmds(const gvk::CommandBuffer& commandBuffer, const gvk::math::Camera& camera) const;
+    void on_gui();
+    void record_draw_cmds(const gvk::CommandBuffer& commandBuffer) const;
 
 private:
     static int load_high_score();

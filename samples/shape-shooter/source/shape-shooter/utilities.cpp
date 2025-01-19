@@ -27,6 +27,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "shape-shooter/utilities.hpp"
 #include "shape-shooter/context.hpp"
 
+#include "glm/gtx/fast_trigonometry.hpp"
+
 namespace shape_shooter {
 
 bool PlayField::contains(const glm::vec3& point) const
@@ -92,6 +94,115 @@ glm::vec4 hsv_to_color(float hue, float saturation, float value, float alpha)
         } else                 { return { c + m, m, x + m, alpha };
         }
     }
+}
+
+bool combo_gui(const char* pLabel, size_t optionCount, const char* const* ppOptions, size_t* pSelectionIndex)
+{
+    assert(pLabel);
+    assert(optionCount);
+    assert(ppOptions);
+    assert(pSelectionIndex);
+    assert(*pSelectionIndex < optionCount);
+    bool selectionMade = false;
+    if (ImGui::BeginCombo(pLabel, ppOptions[*pSelectionIndex])) {
+        for (size_t i = 0; i < optionCount; ++i) {
+            ImGui::PushID((int)i);
+            auto selected = (size_t)*pSelectionIndex == i;
+            if (ImGui::Selectable(ppOptions[(size_t)i], selected)) {
+                *pSelectionIndex = i;
+                selectionMade = true;
+            }
+            if (selected) {
+                ImGui::SetItemDefaultFocus();
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndCombo();
+    }
+    return selectionMade;
+}
+
+void transform_gui(const char* pName, gvk::math::Transform* pTransform)
+{
+    assert(pTransform);
+    ImGui::PushID(pTransform);
+    if (ImGui::CollapsingHeader(pName)) {
+        ImGui::Indent();
+        {
+            ImGui::DragFloat3("translation", &pTransform->translation[0]);
+            ImGui::DragFloat4("rotation", &pTransform->rotation[0]);
+            ImGui::Indent();
+            {
+                auto eulerRad = glm::eulerAngles(pTransform->rotation);
+                if (ImGui::DragFloat3("Euler(rad)", &eulerRad[0], 1.0f / 90.0f, -FLT_MAX, FLT_MAX)) {
+                    pTransform->rotation = eulerRad;
+                }
+                auto eulerDeg = glm::degrees(eulerRad);
+                if (ImGui::DragFloat3("Euler(deg)", &eulerDeg[0], 1.0f, -FLT_MAX, FLT_MAX)) {
+                    pTransform->rotation = glm::wrapAngle(glm::radians(eulerDeg));
+                }
+            }
+            ImGui::Unindent();
+            ImGui::DragFloat3("scale", &pTransform->scale[0]);
+        }
+        ImGui::Unindent();
+    }
+    ImGui::PopID();
+}
+
+void reset_camera(gvk::math::Camera* pCamera, gvk::math::Camera::ProjectionMode projectionMode)
+{
+    assert(pCamera);
+    pCamera->transform.translation = { 0, 965, 0 };
+    pCamera->transform.rotation = glm::radians(glm::vec3(90, 0, 0));
+    pCamera->transform.scale = { 1, 1, 1 };
+    pCamera->aspectRatio = 16.0f / 9.0f;
+    switch (projectionMode) {
+    case gvk::math::Camera::ProjectionMode::Perspective: {
+        pCamera->fieldOfView = 60.0f;
+    } break;
+    case gvk::math::Camera::ProjectionMode::Orthographic: {
+        pCamera->fieldOfView = 2048.0f;
+    } break;
+    default: {
+        assert(false);
+    } break;
+    }
+    pCamera->nearPlane = 0.001f;
+    pCamera->farPlane = 10000.0f;
+    pCamera->projectionMode = projectionMode;
+}
+
+void reset_camera(gvk::math::Camera* pCamera)
+{
+    assert(pCamera);
+    reset_camera(pCamera, pCamera->projectionMode);
+}
+
+void camera_gui(const char* pName, gvk::math::Camera* pCamera)
+{
+    assert(pCamera);
+    ImGui::PushID(pCamera);
+    if (ImGui::CollapsingHeader(pName)) {
+        ImGui::Indent();
+        {
+            if (ImGui::Button("Reset")) {
+                reset_camera(pCamera);
+            }
+            transform_gui("transform", &pCamera->transform);
+            ImGui::DragFloat("aspectRatio", &pCamera->aspectRatio);
+            ImGui::DragFloat("fieldOfView", &pCamera->fieldOfView);
+            ImGui::DragFloat("nearPlane", &pCamera->nearPlane);
+            ImGui::DragFloat("farPlane", &pCamera->farPlane);
+            auto projectionModeIndex = (size_t)pCamera->projectionMode;
+            static const std::array<const char*, 2> scProjectionModes{ "Perspective", "Orthographic", };
+            if (combo_gui("projectionMode", scProjectionModes.size(), scProjectionModes.data(), &projectionModeIndex)) {
+                reset_camera(pCamera, (gvk::math::Camera::ProjectionMode)projectionModeIndex);
+            }
+        }
+        ImGui::Unindent();
+    }
+    ImGui::PopID();
 }
 
 } // namespace shape_shooter
