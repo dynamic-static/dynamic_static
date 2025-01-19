@@ -130,9 +130,9 @@ void ParticleManager::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
     for (size_t i = 0; i < mParticles.count(); ++i) {
         auto& particle = mParticles[i];
         gvk::math::Transform transform{ };
-        transform.translation = SpriteOffset + particle.position;
+        // transform.translation = SpriteOffset + particle.position;
         transform.rotation = glm::angleAxis(particle.orientation, glm::vec3{ 0, 1, 0 }) * glm::angleAxis(glm::radians(90.0f), glm::vec3{ 1, 0, 0 });
-        transform.scale *= SpriteScale * particle.scale;
+        // transform.scale *= SpriteScale * particle.scale;
         spriteRenderer.submit((uint32_t)particle.sprite, transform, particle.color);
     }
 }

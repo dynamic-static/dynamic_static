@@ -53,6 +53,7 @@ public:
 
     gvk::system::Clock clock;
     gvk::system::Clock gameClock;
+    GameState gameState{ GameState::Attract };
     glm::vec2 renderExtent{ };
     dst::RandomNumberGenerator rng;
     // dst::gfx::SpriteRenderer spriteRenderer;

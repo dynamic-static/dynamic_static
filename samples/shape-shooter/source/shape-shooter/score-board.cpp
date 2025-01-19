@@ -102,16 +102,6 @@ void ScoreBoard::reset()
     mFontRenderer = { };
 }
 
-ScoreBoard::State ScoreBoard::get_state() const
-{
-    return mState;
-}
-
-void ScoreBoard::set_state(State state)
-{
-    mState = state;
-}
-
 const dst::gfx::Renderer<dst::text::Font>& ScoreBoard::get_font_renderer() const
 {
     return mFontRenderer;
@@ -152,8 +142,7 @@ void ScoreBoard::reset_multiplier()
 void ScoreBoard::update()
 {
     auto deltaTime = Context::instance().gameClock.elapsed<gvk::system::Seconds<float>>();
-
-    if (mState == State::Attract) {
+    if (Context::instance().gameState == GameState::Attract) {
         mScoreTextMesh.set_text("Shape Shooter");
     } else {
         mScoreTextMesh.set_text(std::to_string(mScore));
@@ -170,7 +159,7 @@ void ScoreBoard::on_gui()
     if (ImGui::CollapsingHeader("ScoreBoard")) {
         ImGui::Indent();
         {
-            static const std::array<const char*, (size_t)State::Count> scStateNames{ "Attract", "Play", "GameOver", };
+            // static const std::array<const char*, (size_t)State::Count> scStateNames{ "Attract", "Play", "GameOver", };
 #if 0
             if (ImGui::BeginCombo("State", scStateNames[(size_t)mState])) {
                 for (size_t state_i = 0; state_i < scStateNames.size(); ++state_i) {
@@ -187,9 +176,9 @@ void ScoreBoard::on_gui()
                 ImGui::EndCombo();
             }
 #else
-            auto stateIndex = (size_t)mState;
-            combo_gui("State", scStateNames.size(), scStateNames.data(), &stateIndex);
-            mState = (State)stateIndex;
+            // auto stateIndex = (size_t)mState;
+            // combo_gui("State", scStateNames.size(), scStateNames.data(), &stateIndex);
+            // mState = (State)stateIndex;
 #endif
             transform_gui("Score transform", &get_text_mesh_renderer(mScoreTextMesh)->transform);
             transform_gui("HighScore transform", &get_text_mesh_renderer(mHighScoreTextMesh)->transform);
@@ -210,7 +199,7 @@ void ScoreBoard::record_draw_cmds(const gvk::CommandBuffer& commandBuffer) const
     dispatchTable.gvkCmdBindDescriptorSets(commandBuffer, bindPoint, fontPipelineLayout, 1, 1, &fontDescriptorSet, 0, nullptr);
     get_text_mesh_renderer(mScoreTextMesh)->record_draw_cmds(commandBuffer, mFontRenderer);
     get_text_mesh_renderer(mHighScoreTextMesh)->record_draw_cmds(commandBuffer, mFontRenderer);
-    if (mState == State::Play) {
+    if (Context::instance().gameState != GameState::Attract) {
         get_text_mesh_renderer(mLivesTextMesh)->record_draw_cmds(commandBuffer, mFontRenderer);
     }
 }

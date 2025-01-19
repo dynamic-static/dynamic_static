@@ -211,8 +211,14 @@ int main(int, const char*[])
         shapeShooterContext.scoreBoardCamera.transform.rotation = glm::quat(glm::vec3{ 16.0f, -45.0f, -2.0f } * glm::pi<float>() / 180.0f);
 #endif
         gvk::math::FreeCameraController cameraController;
+        cameraController.verticalLookMin = FLT_MIN;
+        cameraController.verticalLookMax = FLT_MAX;
         cameraController.fieldOfViewMin = FLT_MIN;
         cameraController.fieldOfViewMax = FLT_MAX;
+        auto f0 = std::numeric_limits<float>::min();
+        (void)f0;
+        auto f1 = std::numeric_limits<float>::max();
+        (void)f1;
         cameraController.set_camera(&shapeShooterContext.gameCamera);
         shape_shooter::reset_camera(&shapeShooterContext.gameCamera);
 
@@ -294,11 +300,6 @@ int main(int, const char*[])
                 } else {
                     gvkSystemSurface.set(gvk::system::Surface::CursorMode::Visible);
                 }
-#if 0
-                if (input.mouse.buttons.pressed(gvk::system::Mouse::Button::Right)) {
-                    shapeShooterContext.gameCamera.fieldOfView = 60.0f;
-                }
-#endif
                 cameraController.update(cameraControllerUpdateInfo);
 
                 // Pause/unpause game
@@ -308,19 +309,6 @@ int main(int, const char*[])
                         shapeShooterContext.gameClock = { };
                     }
                 }
-
-#if 0
-                // TODO : Documentation
-                static bool sOnce;
-                if (!sOnce || input.keyboard.pressed(gvk::system::Key::Backspace)) {
-                    sOnce = true;
-                    lookType = lookType ? 0 : 1;
-                    if (lookType) {
-                        shapeShooterContext.gameCamera.transform.translation = { 0, 965, 0 };
-                        shapeShooterContext.gameCamera.transform.rotation = glm::normalize(glm::angleAxis(glm::radians(90.0f), glm::vec3{ 1, 0, 0 }));
-                    }
-                }
-#endif
             }
 
 #if 0
@@ -430,35 +418,11 @@ int main(int, const char*[])
                     // Call guiRenderer.begin_gui().  Note that all ImGui widgets must be handled
                     //  between calls to begin_gui()/end_gui()
                     guiRenderer.begin_gui(guiRendererBeginInfo);
-#if 0
-                    ImGui::ShowDemoWindow();
-#endif
                     shape_shooter::camera_gui("Camera", &shapeShooterContext.gameCamera);
                     shapeShooterContext.scoreBoard.on_gui();
-
-#if 0
-                    auto& scoreBoardCameraTransform = shapeShooterContext.scoreBoardCamera.transform;
-                    ImGui::DragFloat3("Score Board Camera Position", (float*)&scoreBoardCameraTransform.translation);
-                    auto scoreBoardCameraRotation = glm::eulerAngles(scoreBoardCameraTransform.rotation) * 180.0f / glm::pi<float>();
-                    if (ImGui::DragFloat3("Score Board Camera Rotation", (float*)&scoreBoardCameraRotation)) {
-                        scoreBoardCameraRotation.x = glm::radians(scoreBoardCameraRotation.x);
-                        scoreBoardCameraRotation.y = glm::radians(scoreBoardCameraRotation.y);
-                        scoreBoardCameraRotation.z = glm::radians(scoreBoardCameraRotation.z);
-                        scoreBoardCameraTransform.rotation = scoreBoardCameraRotation;
-                    }
-#endif
-#if 0
-                    ImGui::DragFloat("spawnInExplosionForce", &spawnInExplosionForce);
-#endif
-                    shape_shooter::Context::instance().grid.on_gui();
+                    shapeShooterContext.grid.on_gui();
                     guiRenderer.end_gui(acquiredImageInfo.index);
                 }
-
-#if 0
-                const auto& device = gvkContext.get<gvk::Devices>()[0];
-                gvk_result(vkWaitForFences(device, 1, &vkFences[imageIndex], VK_TRUE, UINT64_MAX));
-                gvk_result(vkResetFences(device, 1, &vkFences[imageIndex]));
-#endif
 
                 gvk_result(vkBeginCommandBuffer(acquiredImageInfo.commandBuffer, &gvk::get_default<VkCommandBufferBeginInfo>()));
 

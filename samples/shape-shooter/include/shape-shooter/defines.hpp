@@ -64,9 +64,28 @@ inline constexpr std::array<const char*, (uint32_t)Sprite::Count> SpriteFilePath
     SHAPE_SHOOTER_CONTENT "/Art/Wanderer.png",
 };
 
-// inline constexpr float SpriteScale{ 0.1f };
-inline constexpr float SpriteScale{ 1.0f };
-inline constexpr glm::vec3 SpriteOffset{ 0, 1, 0 };
+enum class GameState
+{
+    Attract,
+    Spawning,
+    Playing,
+    Paused,
+    Dying,
+    GameOver,
+    Count,
+};
+
+inline constexpr std::array<const char*, (uint32_t)GameState::Count> GameStateLabels {
+    "Attract",
+    "Spawning",
+    "Playing",
+    "Paused",
+    "Dying",
+    "GameOver",
+};
+
+// inline constexpr float SpriteScale{ 1.0f };
+// inline constexpr glm::vec3 SpriteOffset{ 0, 1, 0 };
 inline constexpr float OneOverSixty{ 1.0f / 60.0f };
 
 } // namespace shape_shooter

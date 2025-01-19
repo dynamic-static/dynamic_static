@@ -35,14 +35,6 @@ namespace shape_shooter {
 class ScoreBoard final
 {
 public:
-    enum class State
-    {
-        Attract,
-        Play,
-        GameOver,
-        Count,
-    };
-
     ScoreBoard() = default;
     ScoreBoard(ScoreBoard&& other) = default;
     ScoreBoard& operator=(ScoreBoard&& other) = default;
@@ -50,8 +42,6 @@ public:
     ~ScoreBoard();
     void reset();
 
-    State get_state() const;
-    void set_state(State state);
     const dst::gfx::Renderer<dst::text::Font>& get_font_renderer() const;
     int get_score();
     void add_points(int points);
@@ -66,7 +56,6 @@ private:
     static int load_high_score();
     static void save_high_score(int highScore);
 
-    State mState{ State::Attract };
     int mHighScore{ };
     int mScore{ };
     int mMultiplier{ };
