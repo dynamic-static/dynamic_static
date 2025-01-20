@@ -192,13 +192,6 @@ int main(int, const char*[])
         for (uint32_t i = 0; i < (uint32_t)shape_shooter::Sprite::Count; ++i) {
             gvk_result(dst_sample_load_image(gvkContext, shape_shooter::SpriteFilePaths[i], &spriteStagingBuffer, &spriteImages[i]));
         }
-#if 0
-        dst::gfx::SpriteRenderer::CreateInfo spriteRendererCreateInfo { };
-        spriteRendererCreateInfo.renderPass = wsiContext.get<gvk::RenderPass>();
-        spriteRendererCreateInfo.imageCount = (uint32_t)spriteImages.size();
-        spriteRendererCreateInfo.pImages = spriteImages.data();
-        gvk_result(dst::gfx::SpriteRenderer::create(gvkContext, spriteRendererCreateInfo, &shapeShooterContext.spriteRenderer));
-#endif
         auto spriteColor = gvk::math::Color::White;
         ///////////////////////////////////////////////////////////////////////////////
 
@@ -206,10 +199,7 @@ int main(int, const char*[])
         shapeShooterContext.pPlayerShip = shapeShooterContext.entityManager.create_entity<shape_shooter::PlayerShip>();
         shapeShooterContext.particleManager.resize(2048);
 
-#if 0
-        shapeShooterContext.scoreBoardCamera.transform.translation = { 12.1287f, 32.5891f, -438.474f };
-        shapeShooterContext.scoreBoardCamera.transform.rotation = glm::quat(glm::vec3{ 16.0f, -45.0f, -2.0f } * glm::pi<float>() / 180.0f);
-#endif
+        // TODO : Fix FreeCameraController in GVK...
         gvk::math::FreeCameraController cameraController;
         cameraController.verticalLookMin = FLT_MIN;
         cameraController.verticalLookMax = FLT_MAX;
@@ -237,9 +227,6 @@ int main(int, const char*[])
         const auto& fontRendererDescriptorSetLayouts = fontRendererPipelineLayout.get<gvk::DescriptorSetLayouts>();
         gvk_result(fontRendererDescriptorSetLayouts.empty() ? VK_ERROR_INITIALIZATION_FAILED : VK_SUCCESS);
         gvk_result(create_camera_resources(cameraDescriptorPool, fontRendererDescriptorSetLayouts[0], shapeShooterContext.gameCameraResources));
-#if 0
-        gvk_result(create_camera_resources(cameraDescriptorPool, fontRendererDescriptorSetLayouts[0], shapeShooterContext.scoreBoardCameraResources));
-#endif
 
         ///////////////////////////////////////////////////////////////////////////////
         // Grid
@@ -331,9 +318,6 @@ int main(int, const char*[])
 #endif
 
             update_camera_uniform_buffer(shapeShooterContext.gameCamera, shapeShooterContext.gameCameraResources.first);
-#if 0
-            update_camera_uniform_buffer(shapeShooterContext.scoreBoardCamera, shapeShooterContext.scoreBoardCameraResources.first);
-#endif
 
             ///////////////////////////////////////////////////////////////////////////////
             // CoordinateRenderer
@@ -446,35 +430,24 @@ int main(int, const char*[])
                     // Grid
                     shape_shooter::Context::instance().grid.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
 
-                    // TODO : Draw sprites additively w/depth, then render grid
+                    // TODO : Draw sprites additively w/depth, then render grid (maybe?)
                     // Sprites
                     auto spriteCamera = shapeShooterContext.gameCamera;
                     // spriteCamera.projectionMode = gvk::math::Camera::ProjectionMode::Orthographic;
                     //spriteCamera.fieldOfView = viewport.width;
                     spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
 
+#if 0
                     // CoordinateRenderer
                     const auto& gameCameraDescriptorSet = shapeShooterContext.gameCameraResources.second;
                     vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
                     coordinateRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
-
-#if 0
-                    // Sprites
-                    auto spriteCamera = shapeShooterContext.gameCamera;
-                    // spriteCamera.projectionMode = gvk::math::Camera::ProjectionMode::Orthographic;
-                    //spriteCamera.fieldOfView = viewport.width;
-                    shape_shooter::Context::instance().spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
 #endif
 
                     // ScoreBoard
-#if 0
-                    const auto& scoreBoardCameraDescriptorSet = shapeShooterContext.scoreBoardCameraResources.second;
-                    vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &scoreBoardCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
-                    shape_shooter::Context::instance().scoreBoard.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.scoreBoardCamera);
-#else
+                    const auto& gameCameraDescriptorSet = shapeShooterContext.gameCameraResources.second;
                     vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
                     shape_shooter::Context::instance().scoreBoard.record_draw_cmds(acquiredImageInfo.commandBuffer);
-#endif
                 }
 
                 // If the gvk::gui::Renderer is enabled, record cmds to render it

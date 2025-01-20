@@ -355,8 +355,8 @@ VkResult LineRenderer::create_pipeline(const gvk::Context& gvkContext, const gvk
         gvk_result(fsVkResult);
 
         auto vertexShaderModuleCreateInfo = gvk::get_default<VkShaderModuleCreateInfo>();
-        vertexShaderModuleCreateInfo.codeSize = vertexShaderInfo.spirv.size() * sizeof(uint32_t);
-        vertexShaderModuleCreateInfo.pCode = !vertexShaderInfo.spirv.empty() ? vertexShaderInfo.spirv.data() : nullptr;
+        vertexShaderModuleCreateInfo.codeSize = vertexShaderInfo.bytecode.size() * sizeof(uint32_t);
+        vertexShaderModuleCreateInfo.pCode = !vertexShaderInfo.bytecode.empty() ? vertexShaderInfo.bytecode.data() : nullptr;
         gvk::ShaderModule vertexShaderModule;
         gvk_result(gvk::ShaderModule::create(gvkContext.get<gvk::Devices>()[0], &vertexShaderModuleCreateInfo, nullptr, &vertexShaderModule));
         auto vertexPipelineShaderStageCreateInfo = gvk::get_default<VkPipelineShaderStageCreateInfo>();
@@ -364,8 +364,8 @@ VkResult LineRenderer::create_pipeline(const gvk::Context& gvkContext, const gvk
         vertexPipelineShaderStageCreateInfo.module = vertexShaderModule;
 
         auto fragmentShaderModuleCreateInfo = gvk::get_default<VkShaderModuleCreateInfo>();
-        fragmentShaderModuleCreateInfo.codeSize = fragmentShaderInfo.spirv.size() * sizeof(uint32_t);
-        fragmentShaderModuleCreateInfo.pCode = !fragmentShaderInfo.spirv.empty() ? fragmentShaderInfo.spirv.data() : nullptr;
+        fragmentShaderModuleCreateInfo.codeSize = fragmentShaderInfo.bytecode.size() * sizeof(uint32_t);
+        fragmentShaderModuleCreateInfo.pCode = !fragmentShaderInfo.bytecode.empty() ? fragmentShaderInfo.bytecode.data() : nullptr;
         gvk::ShaderModule fragmentShaderModule;
         gvk_result(gvk::ShaderModule::create(gvkContext.get<gvk::Devices>()[0], &fragmentShaderModuleCreateInfo, nullptr, &fragmentShaderModule));
         auto fragmentPipelineShaderStageCreateInfo = gvk::get_default<VkPipelineShaderStageCreateInfo>();

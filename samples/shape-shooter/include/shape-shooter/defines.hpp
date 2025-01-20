@@ -84,8 +84,8 @@ inline constexpr std::array<const char*, (uint32_t)GameState::Count> GameStateLa
     "GameOver",
 };
 
-// inline constexpr float SpriteScale{ 1.0f };
-// inline constexpr glm::vec3 SpriteOffset{ 0, 1, 0 };
+inline constexpr float SpriteScale{ 1.0f };
+inline constexpr glm::vec3 SpriteOffset{ 0, 1, 0 };
 inline constexpr float OneOverSixty{ 1.0f / 60.0f };
 
 } // namespace shape_shooter
