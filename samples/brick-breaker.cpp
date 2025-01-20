@@ -583,7 +583,7 @@ int main(int, const char* [])
     gvk::system::Clock clock;
     float celebrationTimer = 0;
     float resetTimer = 0;
-    GameState state = GameState::Playing;
+    GameState gameState = GameState::Playing;
 
     // Loop until the user presses [Esc] or closes the app window.
     while (
@@ -638,7 +638,7 @@ int main(int, const char* [])
         }
 
         // Switch on GameState.
-        switch (state) {
+        switch (gameState) {
         case GameState::Playing: {
             // If the user presses [Space] and there's at least one live ball left, fire a
             //  ball.
@@ -691,9 +691,9 @@ int main(int, const char* [])
             //  live balls, then transition GameState to GameOver.
             if (liveBricks.empty()) {
                 celebrationTimer = 0;
-                state = GameState::Celebration;
+                gameState = GameState::Celebration;
             } else if (!liveBallCount) {
-                state = GameState::GameOver;
+                gameState = GameState::GameOver;
             }
         } break;
         case GameState::Celebration: {
@@ -719,7 +719,7 @@ int main(int, const char* [])
                 for (auto& wall : playFieldBarriers) {
                     wall.color = gvk::math::Color::White;
                 }
-                state = GameState::GameOver;
+                gameState = GameState::GameOver;
             }
         } break;
         case GameState::GameOver: {
@@ -740,7 +740,7 @@ int main(int, const char* [])
             }
             // Transition GameState to Resetting
             resetTimer = 0;
-            state = GameState::Resetting;
+            gameState = GameState::Resetting;
         } break;
         case GameState::Resetting: {
             constexpr float ResetDuration = 2.5f;
@@ -786,7 +786,7 @@ int main(int, const char* [])
                     transform.setRotation(btQuaternion::getIdentity());
                     balls[i].rigidBody.set_transform(transform);
                 }
-                state = GameState::Playing;
+                gameState = GameState::Playing;
             }
         } break;
         }

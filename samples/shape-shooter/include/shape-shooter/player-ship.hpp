@@ -39,7 +39,8 @@ public:
     PlayerShip();
 
     uint64_t get_type_id() const override final;
-    bool is_dead() const;
+    void spawn() override final;
+    void kill() override final;
     void update() override final;
     void draw(dst::gfx::SpriteRenderer& spriteRenderer) const override final;
 

@@ -110,8 +110,8 @@ int main(int, const char*[])
 {
     gvk_result_scope_begin(VK_ERROR_INITIALIZATION_FAILED) {
 
-        auto& shapeShooterContext = shape_shooter::Context::instance();
-        shape_shooter::Context::create({ }, &shapeShooterContext);
+        auto& gameContext = shape_shooter::Context::instance();
+        shape_shooter::Context::create({ }, &gameContext);
 
         // Create a gvk::Context.  This will initialize a VkInstance and VkDevice.
         DstSampleGvkContext gvkContext;
@@ -174,16 +174,6 @@ int main(int, const char*[])
 
         // These variables will be controlled via gui widgets
         bool showGui = false;
-        // int lookType = 0;
-
-        ///////////////////////////////////////////////////////////////////////////////
-        // CoordinateRenderer
-        dst::gfx::CoordinateRenderer::CreateInfo coordinateRendererCreateInfo{ };
-        coordinateRendererCreateInfo.renderPass = wsiContext.get<gvk::RenderPass>();
-        coordinateRendererCreateInfo.pTtfFilePath = "C:\\Windows\\Fonts\\bauhs93.ttf";
-        dst::gfx::CoordinateRenderer coordinateRenderer;
-        gvk_result(dst::gfx::CoordinateRenderer::create(gvkContext, coordinateRendererCreateInfo, &coordinateRenderer));
-        ///////////////////////////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////////////////////////
         // Sprites
@@ -195,9 +185,9 @@ int main(int, const char*[])
         auto spriteColor = gvk::math::Color::White;
         ///////////////////////////////////////////////////////////////////////////////
 
-        shape_shooter::ScoreBoard::create(gvkContext, wsiContext.get<gvk::RenderPass>(), &shapeShooterContext.scoreBoard);
-        shapeShooterContext.pPlayerShip = shapeShooterContext.entityManager.create_entity<shape_shooter::PlayerShip>();
-        shapeShooterContext.particleManager.resize(2048);
+        shape_shooter::ScoreBoard::create(gvkContext, wsiContext.get<gvk::RenderPass>(), &gameContext.scoreBoard);
+        gameContext.pPlayerShip = gameContext.entityManager.create_entity<shape_shooter::PlayerShip>();
+        gameContext.particleManager.resize(2048);
 
         // TODO : Fix FreeCameraController in GVK...
         gvk::math::FreeCameraController cameraController;
@@ -209,8 +199,8 @@ int main(int, const char*[])
         (void)f0;
         auto f1 = std::numeric_limits<float>::max();
         (void)f1;
-        cameraController.set_camera(&shapeShooterContext.gameCamera);
-        shape_shooter::reset_camera(&shapeShooterContext.gameCamera);
+        cameraController.set_camera(&gameContext.camera);
+        shape_shooter::reset_camera(&gameContext.camera);
 
         auto cameraDescriptorPoolSize = gvk::get_default<VkDescriptorPoolSize>();
         cameraDescriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -222,11 +212,11 @@ int main(int, const char*[])
         gvk::DescriptorPool cameraDescriptorPool;
         gvk_result(gvk::DescriptorPool::create(gvkContext.get<gvk::Devices>()[0], &cameraDescriptorPoolCreateInfo, nullptr, &cameraDescriptorPool));
 
-        const auto& fontRendererPipeline = shapeShooterContext.scoreBoard.get_font_renderer().get_pipeline();
+        const auto& fontRendererPipeline = gameContext.scoreBoard.get_font_renderer().get_pipeline();
         const auto& fontRendererPipelineLayout = fontRendererPipeline.get<gvk::PipelineLayout>();
         const auto& fontRendererDescriptorSetLayouts = fontRendererPipelineLayout.get<gvk::DescriptorSetLayouts>();
         gvk_result(fontRendererDescriptorSetLayouts.empty() ? VK_ERROR_INITIALIZATION_FAILED : VK_SUCCESS);
-        gvk_result(create_camera_resources(cameraDescriptorPool, fontRendererDescriptorSetLayouts[0], shapeShooterContext.gameCameraResources));
+        gvk_result(create_camera_resources(cameraDescriptorPool, fontRendererDescriptorSetLayouts[0], gameContext.cameraResources));
 
         ///////////////////////////////////////////////////////////////////////////////
         // Grid
@@ -240,24 +230,24 @@ int main(int, const char*[])
         (void)spawnInExplosionForce;
         dst::RandomNumberGenerator rng;
 
-        bool updateGameClock = true;
+        // bool updateGameClock = true;
 
         // gvk::system::Clock clock;
-        auto& clock = shapeShooterContext.clock;
+        // auto& clock = shapeShooterContext.programClock;
         while (
             !(gvkSystemSurface.get<gvk::system::Input>().keyboard.down(gvk::system::Key::Escape)) &&
             !(gvkSystemSurface.get<gvk::system::Surface::StatusFlags>() & gvk::system::Surface::CloseRequested)) {
             gvk::system::Surface::update();
-            shapeShooterContext.audio.update();
-            clock.update();
-            if (updateGameClock) {
-                shapeShooterContext.gameClock = clock;
+            gameContext.audio.update();
+            gameContext.programClock.update();
+            if (gameContext.gameState != shape_shooter::GameState::Paused) {
+                gameContext.gameClock = gameContext.programClock;
             }
 
             auto frameStart = gvk::system::SteadyClock::now();
 
             // Update the gvk::math::FreeCameraController...
-            auto deltaTime = clock.elapsed<gvk::system::Seconds<float>>();
+            auto deltaTime = gameContext.programClock.elapsed<gvk::system::Seconds<float>>();
             const auto& input = gvkSystemSurface.get<gvk::system::Input>();
 
             // Toggle the gui display with [`]
@@ -267,6 +257,9 @@ int main(int, const char*[])
 
             // When ImGui wants mouse/keyboard input, input should be ignored by the scene
             if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard) {
+
+                // TODO : Documentation
+                gameContext.inputManager.update(input);
 
                 // Update camera
                 gvk::math::FreeCameraController::UpdateInfo cameraControllerUpdateInfo {
@@ -289,13 +282,45 @@ int main(int, const char*[])
                 }
                 cameraController.update(cameraControllerUpdateInfo);
 
-                // Pause/unpause game
-                if (input.keyboard.pressed(gvk::system::Key::P)) {
-                    updateGameClock = !updateGameClock;
-                    if (!updateGameClock) {
-                        shapeShooterContext.gameClock = { };
+                // Switch on GameState for input logic
+                switch (gameContext.gameState) {
+                case shape_shooter::GameState::Attract: {
+                    if (input.keyboard.pressed(gvk::system::Key::SpaceBar)) {
+                        gameContext.gameState = shape_shooter::GameState::Playing;
                     }
+                } break;
+                case shape_shooter::GameState::Playing: {
+                    if (input.keyboard.pressed(gvk::system::Key::SpaceBar)) {
+                        gameContext.gameState = shape_shooter::GameState::Paused;
+                        gameContext.gameClock = { };
+                    }
+                } break;
+                case shape_shooter::GameState::Paused: {
+                    if (input.keyboard.pressed(gvk::system::Key::SpaceBar)) {
+                        gameContext.gameState = shape_shooter::GameState::Playing;
+                    }
+                } break;
+                case shape_shooter::GameState::GameOver: {
+                } break;
+                default: {
+                    assert(false);
+                } break;
                 }
+            }
+
+            // Switch on GameState for update logic
+            switch (gameContext.gameState) {
+            case shape_shooter::GameState::Attract: {
+            } break;
+            case shape_shooter::GameState::Playing: {
+            } break;
+            case shape_shooter::GameState::Paused: {
+            } break;
+            case shape_shooter::GameState::GameOver: {
+            } break;
+            default: {
+                assert(false);
+            } break;
             }
 
 #if 0
@@ -317,25 +342,15 @@ int main(int, const char*[])
             }
 #endif
 
-            update_camera_uniform_buffer(shapeShooterContext.gameCamera, shapeShooterContext.gameCameraResources.first);
+            update_camera_uniform_buffer(gameContext.camera, gameContext.cameraResources.first);
 
             ///////////////////////////////////////////////////////////////////////////////
-            // CoordinateRenderer
-            coordinateRenderer.update();
-            ///////////////////////////////////////////////////////////////////////////////
-
-            ///////////////////////////////////////////////////////////////////////////////
-            // shape_shooter::Context
-            shapeShooterContext.inputManager.update(input);
-            shapeShooterContext.entityManager.update();
-            // shapeShooterContext.enemySpawner.update();
-            shapeShooterContext.scoreBoard.update();
-            shapeShooterContext.particleManager.update();
-            ///////////////////////////////////////////////////////////////////////////////
-
-            ///////////////////////////////////////////////////////////////////////////////
-            // Grid
-            shape_shooter::Context::instance().grid.update(shapeShooterContext.gameClock.elapsed<gvk::system::Seconds<float>>());
+            gameContext.scoreBoard.update();
+            gameContext.playerStatus.update(gameContext);
+            gameContext.entityManager.update();
+            // gameContext.enemySpawner.update();
+            gameContext.particleManager.update();
+            gameContext.grid.update(gameContext.gameClock.elapsed<gvk::system::Seconds<float>>());
             ///////////////////////////////////////////////////////////////////////////////
 
             gvk::wsi::AcquiredImageInfo acquiredImageInfo{ };
@@ -344,23 +359,23 @@ int main(int, const char*[])
             if (wsiStatus == VK_SUCCESS || wsiStatus == VK_SUBOPTIMAL_KHR) {
                 const auto& device = gvkContext.get<gvk::Devices>()[0];
                 auto extent = wsiContext.get<gvk::SwapchainKHR>().get<VkSwapchainCreateInfoKHR>().imageExtent;
-                shapeShooterContext.gameCamera.set_aspect_ratio(extent.width, extent.height);
-                shapeShooterContext.renderExtent = { extent.width, extent.height };
+                gameContext.camera.set_aspect_ratio(extent.width, extent.height);
+                gameContext.renderExtent = { extent.width, extent.height };
 
                 // TODO : Documentation
-                auto spriteRendererItr = shapeShooterContext.spriteRenderers.find(acquiredImageInfo.index);
-                if (spriteRendererItr == shapeShooterContext.spriteRenderers.end()) {
+                auto spriteRendererItr = gameContext.spriteRenderers.find(acquiredImageInfo.index);
+                if (spriteRendererItr == gameContext.spriteRenderers.end()) {
                     dst::gfx::SpriteRenderer::CreateInfo spriteRendererCreateInfo{ };
                     spriteRendererCreateInfo.renderPass = wsiContext.get<gvk::RenderPass>();
                     spriteRendererCreateInfo.imageCount = (uint32_t)spriteImages.size();
                     spriteRendererCreateInfo.pImages = spriteImages.data();
-                    spriteRendererItr = shapeShooterContext.spriteRenderers.insert({ acquiredImageInfo.index, { } }).first;
+                    spriteRendererItr = gameContext.spriteRenderers.insert({ acquiredImageInfo.index, { } }).first;
                     gvk_result(dst::gfx::SpriteRenderer::create(gvkContext, spriteRendererCreateInfo, &spriteRendererItr->second));
                 }
                 auto& spriteRenderer = spriteRendererItr->second;
                 spriteRenderer.begin_sprite_batch();
-                shapeShooterContext.particleManager.draw(spriteRenderer);
-                shapeShooterContext.entityManager.draw(spriteRenderer);
+                gameContext.particleManager.draw(spriteRenderer);
+                gameContext.entityManager.draw(spriteRenderer);
                 spriteRenderer.end_sprite_batch();
 
                 // If the gvk::gui::Renderer is enabled, update values based on gui interaction
@@ -402,9 +417,9 @@ int main(int, const char*[])
                     // Call guiRenderer.begin_gui().  Note that all ImGui widgets must be handled
                     //  between calls to begin_gui()/end_gui()
                     guiRenderer.begin_gui(guiRendererBeginInfo);
-                    shape_shooter::camera_gui("Camera", &shapeShooterContext.gameCamera);
-                    shapeShooterContext.scoreBoard.on_gui();
-                    shapeShooterContext.grid.on_gui();
+                    shape_shooter::camera_gui("Camera", &gameContext.camera);
+                    gameContext.scoreBoard.on_gui();
+                    gameContext.grid.on_gui();
                     guiRenderer.end_gui(acquiredImageInfo.index);
                 }
 
@@ -428,24 +443,17 @@ int main(int, const char*[])
                     auto pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
                     // Grid
-                    shape_shooter::Context::instance().grid.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
+                    shape_shooter::Context::instance().grid.record_draw_cmds(acquiredImageInfo.commandBuffer, gameContext.camera, gameContext.renderExtent);
 
                     // TODO : Draw sprites additively w/depth, then render grid (maybe?)
                     // Sprites
-                    auto spriteCamera = shapeShooterContext.gameCamera;
+                    auto spriteCamera = gameContext.camera;
                     // spriteCamera.projectionMode = gvk::math::Camera::ProjectionMode::Orthographic;
                     //spriteCamera.fieldOfView = viewport.width;
                     spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
 
-#if 0
-                    // CoordinateRenderer
-                    const auto& gameCameraDescriptorSet = shapeShooterContext.gameCameraResources.second;
-                    vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
-                    coordinateRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, shapeShooterContext.gameCamera, shapeShooterContext.renderExtent);
-#endif
-
                     // ScoreBoard
-                    const auto& gameCameraDescriptorSet = shapeShooterContext.gameCameraResources.second;
+                    const auto& gameCameraDescriptorSet = gameContext.cameraResources.second;
                     vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
                     shape_shooter::Context::instance().scoreBoard.record_draw_cmds(acquiredImageInfo.commandBuffer);
                 }
@@ -496,8 +504,8 @@ int main(int, const char*[])
 
             static uint64_t sFrameCount;
             ++sFrameCount;
-            static decltype(clock.elapsed<gvk::system::Seconds<>>()) sFpsTimer;
-            sFpsTimer += clock.elapsed<gvk::system::Seconds<>>();
+            static decltype(gameContext.programClock.elapsed<gvk::system::Seconds<>>()) sFpsTimer;
+            sFpsTimer += gameContext.programClock.elapsed<gvk::system::Seconds<>>();
             if (1.0f <= sFpsTimer) {
                 // std::cout << sFrameCount << " / " << sFpsTimer << std::endl;
                 sFrameCount = 0;

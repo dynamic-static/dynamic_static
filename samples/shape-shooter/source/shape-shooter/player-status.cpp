@@ -25,7 +25,45 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *******************************************************************************/
 
 #include "shape-shooter/player-status.hpp"
+#include "shape-shooter/context.hpp"
 
 namespace shape_shooter {
+
+void PlayerStatus::update(Context& gameContext)
+{
+    assert(gameContext.pPlayerShip);
+    switch (gameContext.gameState) {
+    case GameState::Attract: {
+    } break;
+    case GameState::Playing: {
+        switch (gameContext.pPlayerShip->get_state()) {
+        case Entity::State::Inactive: {
+            if (mLives) {
+
+            }
+        } break;
+        case Entity::State::Spawning: {
+
+        } break;
+        case Entity::State::Active: {
+
+        } break;
+        case Entity::State::Dying: {
+
+        } break;
+        default: {
+            assert(false);
+        } break;
+        }
+    } break;
+    case GameState::Paused: {
+    } break;
+    case GameState::GameOver: {
+    } break;
+    default: {
+        assert(false);
+    } break;
+    }
+}
 
 } // namespace shape_shooter

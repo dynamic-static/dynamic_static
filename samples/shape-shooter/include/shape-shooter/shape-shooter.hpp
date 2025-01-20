@@ -34,13 +34,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace shape_shooter {
 
-enum class GameState
-{
-    Attract,
-    Play,
-    GameOver,
-};
-
+#if 0
 class Attract final
     : public dst::State<>
 {
@@ -62,5 +56,6 @@ public:
 
     }
 };
+#endif
 
 } // namespace shape_shooter

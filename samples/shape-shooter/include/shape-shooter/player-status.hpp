@@ -36,8 +36,10 @@ class PlayerStatus final
 {
 public:
     PlayerStatus() = default;
+    void update(Context& gameContext);
 
 private:
+    float mRespawnTimer{ };
     float mMultiplierExpiryTime{ 0.8f };
     int mMaxMultiplier{ 20 };
     int mLives{ };

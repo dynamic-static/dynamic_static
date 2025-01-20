@@ -39,7 +39,7 @@ void EnemySpawner::update()
     const auto& pPlayerShip = context.pPlayerShip;
     assert(pPlayerShip);
     auto& entityManager = context.entityManager;
-    if (!pPlayerShip->is_dead() && entityManager.get_entity_count() < 200) {
+    if (pPlayerShip->get_state() == Entity::State::Inactive && entityManager.get_entity_count() < 200) {
         if (rng.die_roll((int)mInverseSpawnChance) == 1) {
             auto pEnemy = entityManager.create_entity<Enemy>(Sprite::Seeker);
             pEnemy->position = get_spawn_position();

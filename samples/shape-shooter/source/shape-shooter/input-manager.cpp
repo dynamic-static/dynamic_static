@@ -78,7 +78,7 @@ glm::vec3 InputManager::get_mouse_aim_point() const
         1.0f,
         1.0f
     };
-    const auto& gameCamera = context.gameCamera;
+    const auto& gameCamera = context.camera;
     auto cameraSpaceMouseRay = glm::inverse(gameCamera.projection()) * clipSpaceMouseRay;
     cameraSpaceMouseRay.z = -1;
     cameraSpaceMouseRay.w = 0;
@@ -118,7 +118,7 @@ glm::vec3 InputManager::get_mouse_aim_direction() const
         1.0f,
         1.0f
     };
-    const auto& gameCamera = context.gameCamera;
+    const auto& gameCamera = context.camera;
     auto cameraSpaceMouseRay = glm::inverse(gameCamera.projection()) * clipSpaceMouseRay;
     cameraSpaceMouseRay.z = -1;
     cameraSpaceMouseRay.w = 0;

@@ -67,20 +67,16 @@ inline constexpr std::array<const char*, (uint32_t)Sprite::Count> SpriteFilePath
 enum class GameState
 {
     Attract,
-    Spawning,
     Playing,
     Paused,
-    Dying,
     GameOver,
     Count,
 };
 
 inline constexpr std::array<const char*, (uint32_t)GameState::Count> GameStateLabels {
     "Attract",
-    "Spawning",
     "Playing",
     "Paused",
-    "Dying",
     "GameOver",
 };
 

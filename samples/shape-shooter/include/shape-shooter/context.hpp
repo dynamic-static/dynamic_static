@@ -51,12 +51,12 @@ public:
     Context() = default;
     static bool create(const CreateInfo& createInfo, Context* pContext);
 
-    gvk::system::Clock clock;
+    gvk::system::Clock programClock;
     gvk::system::Clock gameClock;
+    gvk::system::TimePoint<> gameStateBegin;
     GameState gameState{ GameState::Attract };
     glm::vec2 renderExtent{ };
     dst::RandomNumberGenerator rng;
-    // dst::gfx::SpriteRenderer spriteRenderer;
     std::map<uint32_t, dst::gfx::SpriteRenderer> spriteRenderers;
     PlayField playField{ { 1920, 1, 1080 } };
     PlayerShip* pPlayerShip{ };
@@ -66,12 +66,8 @@ public:
     EntityManager entityManager;
     InputManager inputManager;
     ParticleManager particleManager;
-    gvk::math::Camera gameCamera;
-    std::pair<gvk::Buffer, gvk::DescriptorSet> gameCameraResources;
-#if 0
-    gvk::math::Camera scoreBoardCamera;
-    std::pair<gvk::Buffer, gvk::DescriptorSet> scoreBoardCameraResources;
-#endif
+    gvk::math::Camera camera;
+    std::pair<gvk::Buffer, gvk::DescriptorSet> cameraResources;
     Audio audio;
     Grid grid;
 

@@ -38,6 +38,11 @@ Entity::~Entity()
 {
 }
 
+Entity::State Entity::get_state() const
+{
+    return mState;
+}
+
 glm::vec2 Entity::get_sprite_extent(const dst::gfx::SpriteRenderer& spriteRenderer) const
 {
     const auto& imageViews = spriteRenderer.get_images();

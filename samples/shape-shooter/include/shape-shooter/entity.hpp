@@ -34,11 +34,23 @@ namespace shape_shooter {
 class Entity
 {
 public:
+    enum class State
+    {
+        Inactive,
+        Spawning,
+        Active,
+        Dying,
+        Count,
+    };
+
     Entity(Sprite sprite);
     virtual ~Entity() = 0;
 
+    State get_state() const;
     glm::vec2 get_sprite_extent(const dst::gfx::SpriteRenderer& spriteRenderer) const;
     virtual uint64_t get_type_id() const = 0;
+    virtual void spawn() { };
+    virtual void kill() { };
     virtual void update() = 0;
     virtual void draw(dst::gfx::SpriteRenderer& spriteRenderer) const;
     static bool collision(const Entity& lhs, const Entity& rhs);
@@ -52,6 +64,7 @@ public:
 
 protected:
     Sprite mSprite{ };
+    State mState{ };
 
 private:
     Entity(const Entity&) = delete;

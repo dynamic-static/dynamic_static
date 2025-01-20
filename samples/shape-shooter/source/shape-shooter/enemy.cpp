@@ -104,7 +104,7 @@ void Enemy::FollowPlayer::update(Enemy& enemy)
     const auto& context = Context::instance();
     assert(context.pPlayerShip);
     const auto& playerShip = *context.pPlayerShip;
-    if (!playerShip.is_dead()) {
+    if (playerShip.get_state() != State::Inactive) {
         auto direction = playerShip.position - enemy.position;
         if (direction.x || direction.y || direction.z) {
             direction = glm::normalize(direction);
