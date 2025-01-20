@@ -824,18 +824,6 @@ int main(int, const char* [])
             }
         }
 
-#if 0
-        // Call wsiManager.update().  This will cause WsiManager to respond to system
-        //  updates for the SurfaceKHR it's managing.  This call may cause resources to
-        //  be created/destroyed.  If there's a valid SwapchainKHR, render and present.
-        wsiManager.update();
-        auto swapchain = wsiManager.get_swapchain();
-        if (swapchain) {
-            // Update the Camera's aspect ratio to match the SwapchainKHR's then update the
-            //  Camera's uniform buffer
-            auto extent = wsiManager.get_swapchain().get<VkSwapchainCreateInfoKHR>().imageExtent;
-            camera.set_aspect_ratio(extent.width, extent.height);
-#else
         // TODO : Documentation
         gvk::wsi::AcquiredImageInfo acquiredImageInfo{ };
         gvk::RenderTarget acquiredImageRenderTarget{ };
@@ -843,7 +831,6 @@ int main(int, const char* [])
         if (wsiStatus == VK_SUCCESS || wsiStatus == VK_SUBOPTIMAL_KHR) {
             auto extent = wsiContext.get<gvk::SwapchainKHR>().get<VkSwapchainCreateInfoKHR>().imageExtent;
             camera.set_aspect_ratio(extent.width, extent.height);
-#endif
 
             CameraUniforms cameraUbo { };
             cameraUbo.view = camera.view();
@@ -851,25 +838,6 @@ int main(int, const char* [])
             VmaAllocationInfo allocationInfo { };
             vmaGetAllocationInfo(gvkContext.get<gvk::Devices>()[0].get<VmaAllocator>(), cameraUniformBuffer.get<VmaAllocation>(), &allocationInfo);
             memcpy(allocationInfo.pMappedData, &cameraUbo, sizeof(CameraUniforms));
-
-#if 0
-            // Acquire the next Image to render to.  The index will be used to access the
-            //  acquired Image as well as the CommandBuffer and Fence associated with that
-            //  Image.  Note that this method may return VK_SUBOPTIMAL_KHR when the window
-            //  is resized/minimized/maximized/etc...gvk::WsiManager will update resources
-            //  when this occurs so there's no need to bail.
-            uint32_t imageIndex = 0;
-            auto vkResult = wsiManager.acquire_next_image(UINT64_MAX, VK_NULL_HANDLE, &imageIndex);
-            assert(vkResult == VK_SUCCESS || vkResult == VK_SUBOPTIMAL_KHR);
-
-            // Using the acquired Image index, wait on the associated Fence.  This ensures
-            //  that the Image isn't currently in use via vkQueueSubmit().  After waiting
-            //  on the Fence, immediately reset it so that it's ready to be used in the
-            //  next call to vkQueueSubmit().
-            const auto& vkFences = wsiManager.get_vk_fences();
-            dst_vk_result(vkWaitForFences(gvkDevice, 1, &vkFences[imageIndex], VK_TRUE, UINT64_MAX));
-            dst_vk_result(vkResetFences(gvkDevice, 1, &vkFences[imageIndex]));
-#endif
 
             // Begin CommandBuffer recording and begin a RenderPass.
             dst_vk_result(vkBeginCommandBuffer(acquiredImageInfo.commandBuffer, &gvk::get_default<VkCommandBufferBeginInfo>()));
