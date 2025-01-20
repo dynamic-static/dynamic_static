@@ -256,7 +256,7 @@ int main(int, const char*[])
             }
 
             // When ImGui wants mouse/keyboard input, input should be ignored by the scene
-            if (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard) {
+            if (!showGui || (!ImGui::GetIO().WantCaptureMouse && !ImGui::GetIO().WantCaptureKeyboard)) {
 
                 // TODO : Documentation
                 gameContext.inputManager.update(input);

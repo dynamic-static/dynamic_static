@@ -59,7 +59,9 @@ void PlayerShip::update()
 
     } break;
     case State::Spawning: {
-
+        // TODO : Apply force to grid
+        // TODO : SFX
+        mState = State::Active;
     } break;
     case State::Active: {
         auto& context = Context::instance();

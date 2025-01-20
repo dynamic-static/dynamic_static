@@ -39,17 +39,20 @@ void PlayerStatus::update(Context& gameContext)
         switch (gameContext.pPlayerShip->get_state()) {
         case Entity::State::Inactive: {
             if (mLives) {
-
+                if (0 <= mRespawnTimer) {
+                    gameContext.pPlayerShip->spawn();
+                } else {
+                    mRespawnTimer -= gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();
+                }
+            } else {
+                gameContext.gameState = GameState::GameOver;
             }
         } break;
         case Entity::State::Spawning: {
-
         } break;
         case Entity::State::Active: {
-
         } break;
         case Entity::State::Dying: {
-
         } break;
         default: {
             assert(false);

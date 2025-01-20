@@ -65,6 +65,7 @@ public:
 protected:
     Sprite mSprite{ };
     State mState{ };
+    float mStateTimer{ };
 
 private:
     Entity(const Entity&) = delete;

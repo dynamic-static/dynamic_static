@@ -42,14 +42,13 @@ private:
     float mRespawnTimer{ };
     float mMultiplierExpiryTime{ 0.8f };
     int mMaxMultiplier{ 20 };
-    int mLives{ };
+    int mLives{ 3 };
     int mScore{ };
     int mHighScore{ };
     int mMultiplier{ };
     bool mGameOver{ };
     float mMultiplierTimeLeft{ };
     int mScoreForExtraLife{ };
-    std::filesystem::path mHighScoreFileName{ "highscore.txt"};
 
     PlayerStatus(const PlayerStatus&) = delete;
     PlayerStatus& operator=(const PlayerStatus&) = delete;
