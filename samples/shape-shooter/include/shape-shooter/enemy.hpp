@@ -35,21 +35,13 @@ class Enemy final
     : public Entity
 {
 public:
-    Enemy(Sprite sprite);
-
-    uint64_t get_type_id() const override final;
-    uint32_t get_point_value() const;
-    bool is_active() const;
-    void handle_collision(const Enemy& other);
-    void update() override final;
-    void draw(dst::gfx::SpriteRenderer& spriteRenderer) const override final;
-
-private:
     class Behavior
     {
     public:
         Behavior() = default;
-        virtual void update(Enemy& enemy) = 0;
+        virtual ~Behavior() = 0;
+        virtual uint32_t get_point_value() const = 0;
+        virtual void update(Context& gameContext, Enemy& enemy) = 0;
     private:
         Behavior(const Behavior&) = delete;
         Behavior& operator=(const Behavior&) = delete;
@@ -59,8 +51,8 @@ private:
         : public Behavior
     {
     public:
-        FollowPlayer() = default;
-        void update(Enemy& enemy) override final;
+        uint32_t get_point_value() const override final;
+        void update(Context& gameContext, Enemy& enemy) override final;
     private:
         float mAcceleration{ 0.9f };
     };
@@ -69,16 +61,24 @@ private:
         : public Behavior
     {
     public:
-        MoveRandomly();
-        void update(Enemy& enemy) override final;
-    private:
-        float mDirection{ };
-        uint32_t mUpdateCounter{ };
+        uint32_t get_point_value() const override final;
+        void update(Context& gameContext, Enemy& enemy) override final;
+        float directionTimer{ };
+        float direction{ };
     };
 
+    Enemy(Context& gameContext, Sprite sprite, std::unique_ptr<Behavior>&& upBehavior);
+
+    uint64_t get_type_id() const override final;
+    uint32_t get_point_value() const;
+    bool is_active() const;
+    void handle_collision(const Enemy& other);
+    void update(Context& gameContext) override final;
+    void draw(dst::gfx::SpriteRenderer& spriteRenderer) const override final;
+
+private:
     std::vector<std::unique_ptr<Behavior>> mBehaviors;
     float mTimeUntilStart{ 1.0f };
-    uint32_t mPointValue{ 1 };
 };
 
 } // namespace shape_shooter

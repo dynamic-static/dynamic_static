@@ -45,7 +45,7 @@ public:
     EntityManager() = default;
 
     uint32_t get_entity_count() const;
-    void update();
+    void update(Context& gameContext);
     void handle_collisions();
     void kill_player();
     void draw(dst::gfx::SpriteRenderer& spriteRenderer) const;

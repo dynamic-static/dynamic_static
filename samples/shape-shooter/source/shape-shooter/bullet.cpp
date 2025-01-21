@@ -44,12 +44,11 @@ uint64_t Bullet::get_type_id() const
     return shape_shooter::get_type_id<Bullet>();
 }
 
-void Bullet::update()
+void Bullet::update(Context& gameContext)
 {
-    auto& context = Context::instance();
-    position += velocity * context.gameClock.elapsed<gvk::system::Seconds<float>>();
+    position += velocity * gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();
     Context::instance().grid.apply_explosive_force(0.5f * glm::length(velocity), position, 80.0f);
-    if (!context.playField.contains(position)) {
+    if (!gameContext.playField.contains(position)) {
         expired = true;
         for (uint32_t i = 0; i < 30; ++i) {
             Particle particle{ };
@@ -58,7 +57,7 @@ void Bullet::update()
             particle.color = gvk::math::Color::LightBlue;
             particle.duration = 50.0f * OneOverSixty;
             particle.type = Particle::Type::Bullet;
-            context.particleManager.add(particle);
+            gameContext.particleManager.add(particle);
         }
     }
 }

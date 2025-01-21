@@ -36,13 +36,13 @@ uint32_t EntityManager::get_entity_count() const
     return (uint32_t)mEntities.size();
 }
 
-void EntityManager::update()
+void EntityManager::update(Context& gameContext)
 {
     mUpdating = true;
     handle_collisions();
     for (auto& upEntity : mEntities) {
         assert(upEntity);
-        upEntity->update();
+        upEntity->update(gameContext);
     }
     mUpdating = false;
     for (auto& upAddedEntity : mAddedEntities) {
@@ -81,8 +81,8 @@ void EntityManager::handle_collisions()
                     float speed = 18.0f * (1.0f - 1.0f / Context::instance().rng.range(1, 10));
                     Particle particle{ };
                     particle.position = pEnemy->position;
-                    particle.velocity = get_random_vector(speed, speed);
-                    particle.duration = 190;
+                    particle.velocity = get_random_vector(speed, speed) / OneOverSixty;
+                    particle.duration = 190.0f * OneOverSixty;
                     particle.scale *= 1.5f;
                     particle.type = Particle::Type::Enemy;
                     particle.color = glm::lerp(color0, color1, Context::instance().rng.range(0.0f, 1.0f));

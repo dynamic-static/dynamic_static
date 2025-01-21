@@ -52,7 +52,7 @@ void PlayerShip::kill()
 
 }
 
-void PlayerShip::update()
+void PlayerShip::update(Context& gameContext)
 {
     switch (mState) {
     case State::Inactive: {
@@ -64,15 +64,9 @@ void PlayerShip::update()
         mState = State::Active;
     } break;
     case State::Active: {
-        auto& context = Context::instance();
-        auto& rng = context.rng;
-        const auto& playField = context.playField;
-        auto& entityManager = context.entityManager;
-        (void)entityManager;
-        const auto& inputManager = context.inputManager;
-        auto deltaTime = Context::instance().gameClock.elapsed<gvk::system::Seconds<float>>();
+        auto deltaTime = gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();
 
-        auto aimDirection = inputManager.get_aim_direction();
+        auto aimDirection = gameContext.inputManager.get_aim_direction();
         if (0 < glm::length2(aimDirection) && mCooldownTimer <= 0) {
             mCooldownTimer = mCooldownTime;
             // TODO : Sort out inconsistent rotations from get_orientation()
@@ -81,18 +75,18 @@ void PlayerShip::update()
             auto aimRotation = glm::angleAxis(aimAngle, glm::vec3{ 0, 1, 0 });
             (void)aimRotation;
 
-            float bulletSpread = rng.range(-0.04f, 0.04f) + rng.range(-0.04f, 0.04f);
+            float bulletSpread = gameContext.rng.range(-0.04f, 0.04f) + gameContext.rng.range(-0.04f, 0.04f);
             auto bulletVelocity = from_polar(aimAngle + bulletSpread, 11.0f / OneOverSixty);
 
-            entityManager.create_entity<Bullet>(position + glm::vec3{ 35, 0, -8 } *aimRotation, bulletVelocity);
-            entityManager.create_entity<Bullet>(position + glm::vec3{ 35, 0,  8 } *aimRotation, bulletVelocity);
-            context.audio.play(SoundEffect::Shot);
+            gameContext.entityManager.create_entity<Bullet>(position + glm::vec3{ 35, 0, -8 } *aimRotation, bulletVelocity);
+            gameContext.entityManager.create_entity<Bullet>(position + glm::vec3{ 35, 0,  8 } *aimRotation, bulletVelocity);
+            gameContext.audio.play(SoundEffect::Shot);
         }
         mCooldownTimer -= deltaTime;
 
-        velocity += inputManager.get_movement_direction() * mSpeed * deltaTime;
+        velocity += gameContext.inputManager.get_movement_direction() * mSpeed * deltaTime;
         position += velocity;
-        const auto& halfPlayFieldExtent = playField.extent * 0.5f;
+        const auto& halfPlayFieldExtent = gameContext.playField.extent * 0.5f;
         position = glm::clamp(position, -halfPlayFieldExtent, halfPlayFieldExtent);
         if (0.0f < glm::length2(velocity)) {
             orientation = get_orientation(velocity);

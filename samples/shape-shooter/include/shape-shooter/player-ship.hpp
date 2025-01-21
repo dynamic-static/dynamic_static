@@ -41,7 +41,7 @@ public:
     uint64_t get_type_id() const override final;
     void spawn() override final;
     void kill() override final;
-    void update() override final;
+    void update(Context& gameContext) override final;
     void draw(dst::gfx::SpriteRenderer& spriteRenderer) const override final;
 
 private:

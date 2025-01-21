@@ -35,11 +35,11 @@ class EnemySpawner final
 public:
     EnemySpawner() = default;
 
-    void update();
+    void update(Context& gameContext);
     void reset();
 
 private:
-    glm::vec3 get_spawn_position();
+    glm::vec3 get_spawn_position(const Context& gameContext);
 
     float mInverseSpawnChance{ 90 };
     float mInverseBlackHoleChance{ 600 };

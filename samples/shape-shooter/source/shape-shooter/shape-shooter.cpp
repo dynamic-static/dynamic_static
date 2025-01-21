@@ -347,8 +347,8 @@ int main(int, const char*[])
             ///////////////////////////////////////////////////////////////////////////////
             gameContext.scoreBoard.update();
             gameContext.playerStatus.update(gameContext);
-            gameContext.entityManager.update();
-            // gameContext.enemySpawner.update();
+            gameContext.enemySpawner.update(gameContext);
+            gameContext.entityManager.update(gameContext);
             gameContext.particleManager.update();
             gameContext.grid.update(gameContext.gameClock.elapsed<gvk::system::Seconds<float>>());
             ///////////////////////////////////////////////////////////////////////////////
