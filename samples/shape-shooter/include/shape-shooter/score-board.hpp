@@ -57,6 +57,7 @@ private:
     static void save_high_score(int highScore);
 
     int mHighScore{ };
+    int mLives{ 3 };
     int mScore{ };
     int mMultiplier{ };
     float mMultiplierTimer{ };

@@ -92,6 +92,7 @@ void ScoreBoard::reset()
 {
     save_high_score(mHighScore);
     mHighScore = 0;
+    mLives = 3;
     mScore = 0;
     mMultiplier = 0;
     mMultiplierTimer = 0;
