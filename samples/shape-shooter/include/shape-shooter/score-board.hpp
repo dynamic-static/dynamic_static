@@ -43,8 +43,10 @@ public:
     void reset();
 
     const dst::gfx::Renderer<dst::text::Font>& get_font_renderer() const;
-    int get_score();
+    int get_score() const;
     void add_points(int points);
+    int get_lives() const;
+    void subtract_life();
     void increase_multiplier();
     void reset_score();
     void reset_multiplier();

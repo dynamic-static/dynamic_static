@@ -1,0 +1,340 @@
+diff --git a/samples/shape-shooter/include/shape-shooter/entity-manager.hpp b/samples/shape-shooter/include/shape-shooter/entity-manager.hpp
+index 55f071b..18612eb 100644
+--- a/samples/shape-shooter/include/shape-shooter/entity-manager.hpp
++++ b/samples/shape-shooter/include/shape-shooter/entity-manager.hpp
+@@ -46,8 +46,7 @@ public:
+ 
+     uint32_t get_entity_count() const;
+     void update(Context& gameContext);
+-    void handle_collisions();
+-    void kill_player();
++    void handle_collisions(Context& gameContext);
+     void draw(dst::gfx::SpriteRenderer& spriteRenderer) const;
+ 
+     template <typename EntityType, typename ...Args>
+diff --git a/samples/shape-shooter/include/shape-shooter/player-ship.hpp b/samples/shape-shooter/include/shape-shooter/player-ship.hpp
+index e3549ed..df6807d 100644
+--- a/samples/shape-shooter/include/shape-shooter/player-ship.hpp
++++ b/samples/shape-shooter/include/shape-shooter/player-ship.hpp
+@@ -39,6 +39,7 @@ public:
+     PlayerShip();
+ 
+     uint64_t get_type_id() const override final;
++    float get_life_time() const;
+     void spawn() override final;
+     void kill() override final;
+     void update(Context& gameContext) override final;
+@@ -50,6 +51,8 @@ private:
+     float mSpeed{ 8.0f / (1.0f / 60.0f) };
+     float mCooldownTime{ 0.1f };
+     float mCooldownTimer{ };
++    float mRespawnTimer{ };
++    float mLifeTime{ };
+ };
+ 
+ } // namespace shape_shooter
+diff --git a/samples/shape-shooter/include/shape-shooter/player-status.hpp b/samples/shape-shooter/include/shape-shooter/player-status.hpp
+index c51b520..5ad18be 100644
+--- a/samples/shape-shooter/include/shape-shooter/player-status.hpp
++++ b/samples/shape-shooter/include/shape-shooter/player-status.hpp
+@@ -37,18 +37,10 @@ class PlayerStatus final
+ public:
+     PlayerStatus() = default;
+     void update(Context& gameContext);
++    void kill(Context& gameContext);
+ 
+ private:
+     float mRespawnTimer{ };
+-    float mMultiplierExpiryTime{ 0.8f };
+-    int mMaxMultiplier{ 20 };
+-    int mLives{ 3 };
+-    int mScore{ };
+-    int mHighScore{ };
+-    int mMultiplier{ };
+-    bool mGameOver{ };
+-    float mMultiplierTimeLeft{ };
+-    int mScoreForExtraLife{ };
+ 
+     PlayerStatus(const PlayerStatus&) = delete;
+     PlayerStatus& operator=(const PlayerStatus&) = delete;
+diff --git a/samples/shape-shooter/include/shape-shooter/score-board.hpp b/samples/shape-shooter/include/shape-shooter/score-board.hpp
+index b3bb197..b54b42b 100644
+--- a/samples/shape-shooter/include/shape-shooter/score-board.hpp
++++ b/samples/shape-shooter/include/shape-shooter/score-board.hpp
+@@ -43,7 +43,9 @@ public:
+     void reset();
+ 
+     const dst::gfx::Renderer<dst::text::Font>& get_font_renderer() const;
+-    int get_score();
++    int get_lives() const;
++    int get_score() const;
++    void subtract_life();
+     void add_points(int points);
+     void increase_multiplier();
+     void reset_score();
+@@ -57,6 +59,7 @@ private:
+     static void save_high_score(int highScore);
+ 
+     int mHighScore{ };
++    int mLives{ 3 };
+     int mScore{ };
+     int mMultiplier{ };
+     float mMultiplierTimer{ };
+diff --git a/samples/shape-shooter/source/shape-shooter/entity-manager.cpp b/samples/shape-shooter/source/shape-shooter/entity-manager.cpp
+index ba29277..9d96445 100644
+--- a/samples/shape-shooter/source/shape-shooter/entity-manager.cpp
++++ b/samples/shape-shooter/source/shape-shooter/entity-manager.cpp
+@@ -39,7 +39,7 @@ uint32_t EntityManager::get_entity_count() const
+ void EntityManager::update(Context& gameContext)
+ {
+     mUpdating = true;
+-    handle_collisions();
++    handle_collisions(gameContext);
+     for (auto& upEntity : mEntities) {
+         assert(upEntity);
+         upEntity->update(gameContext);
+@@ -56,7 +56,7 @@ void EntityManager::update(Context& gameContext)
+     std::erase_if(mEntities, [](const std::unique_ptr<Entity>& upEntity) { return upEntity->expired; });
+ }
+ 
+-void EntityManager::handle_collisions()
++void EntityManager::handle_collisions(Context& gameContext)
+ {
+     for (uint32_t i = 0; i < mEnemies.size(); ++i) {
+         for (uint32_t j = i + 1; j < mEnemies.size(); ++j) {
+@@ -69,42 +69,37 @@ void EntityManager::handle_collisions()
+     for (auto pEnemy : mEnemies) {
+         for (auto pBullet : mBullets) {
+             if (Entity::collision(*pEnemy, *pBullet)) {
+-                Context::instance().scoreBoard.add_points(pEnemy->get_point_value());
+-                Context::instance().scoreBoard.increase_multiplier();
++                gameContext.scoreBoard.add_points(pEnemy->get_point_value());
++                gameContext.scoreBoard.increase_multiplier();
+                 pEnemy->expired = true;
+                 pBullet->expired = true;
+-                auto hue0 = Context::instance().rng.range(0.0f, 6.0f);
+-                auto hue1 = glm::mod(hue0 + Context::instance().rng.range(0.0f, 2.0f), 6.0f);
++                auto hue0 = gameContext.rng.range(0.0f, 6.0f);
++                auto hue1 = glm::mod(hue0 + gameContext.rng.range(0.0f, 2.0f), 6.0f);
+                 auto color0 = hsv_to_color(hue0, 0.5f, 1.0f);
+                 auto color1 = hsv_to_color(hue1, 0.5f, 1.0f);
+                 for (uint32_t i = 0; i < 120; ++i) {
+-                    float speed = 18.0f * (1.0f - 1.0f / Context::instance().rng.range(1, 10));
++                    float speed = 18.0f * (1.0f - 1.0f / gameContext.rng.range(1, 10));
+                     Particle particle{ };
+                     particle.position = pEnemy->position;
+                     particle.velocity = get_random_vector(speed, speed) / OneOverSixty;
+                     particle.duration = 190.0f * OneOverSixty;
+                     particle.scale *= 1.5f;
+                     particle.type = Particle::Type::Enemy;
+-                    particle.color = glm::lerp(color0, color1, Context::instance().rng.range(0.0f, 1.0f));
+-                    Context::instance().particleManager.add(particle);
++                    particle.color = glm::lerp(color0, color1, gameContext.rng.range(0.0f, 1.0f));
++                    gameContext.particleManager.add(particle);
+                 }
+             }
+         }
+     }
+-    const auto& pPlayerShip = Context::instance().pPlayerShip;
+     for (auto pEnemy : mEnemies) {
+-        if (pEnemy->is_active() && Entity::collision(*pEnemy, *pPlayerShip)) {
+-            kill_player();
++        assert(gameContext.pPlayerShip);
++        if (pEnemy->is_active() && Entity::collision(*pEnemy, *gameContext.pPlayerShip)) {
++            gameContext.playerStatus.kill(gameContext);
+             break;
+         }
+     }
+ }
+ 
+-void EntityManager::kill_player()
+-{
+-
+-}
+-
+ void EntityManager::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
+ {
+     for (const auto& entity : mEntities) {
+diff --git a/samples/shape-shooter/source/shape-shooter/player-ship.cpp b/samples/shape-shooter/source/shape-shooter/player-ship.cpp
+index 48f96fa..9977925 100644
+--- a/samples/shape-shooter/source/shape-shooter/player-ship.cpp
++++ b/samples/shape-shooter/source/shape-shooter/player-ship.cpp
+@@ -41,6 +41,11 @@ uint64_t PlayerShip::get_type_id() const
+     return shape_shooter::get_type_id<PlayerShip>();
+ }
+ 
++float PlayerShip::get_life_time() const
++{
++    return mLifeTime;
++}
++
+ void PlayerShip::spawn()
+ {
+     assert(mState == State::Inactive);
+@@ -49,22 +54,35 @@ void PlayerShip::spawn()
+ 
+ void PlayerShip::kill()
+ {
+-
++    mRespawnTimer = 0.1f;
++    mLifeTime = 0;
+ }
+ 
+ void PlayerShip::update(Context& gameContext)
+ {
+     switch (mState) {
+     case State::Inactive: {
+-
++        if (gameContext.gameState == GameState::Playing) {
++            if (gameContext.scoreBoard.get_lives()) {
++                if (0 < mRespawnTimer) {
++                    mRespawnTimer -= gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();
++                } else {
++                    mState = State::Spawning;
++                }
++            } else {
++                gameContext.gameState = GameState::GameOver;
++            }
++        }
+     } break;
+     case State::Spawning: {
+         // TODO : Apply force to grid
+         // TODO : SFX
+         mState = State::Active;
++        position = { };
+     } break;
+     case State::Active: {
+         auto deltaTime = gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();
++        mLifeTime += deltaTime;
+ 
+         auto aimDirection = gameContext.inputManager.get_aim_direction();
+         if (0 < glm::length2(aimDirection) && mCooldownTimer <= 0) {
+diff --git a/samples/shape-shooter/source/shape-shooter/player-status.cpp b/samples/shape-shooter/source/shape-shooter/player-status.cpp
+index 58f2f88..1a52972 100644
+--- a/samples/shape-shooter/source/shape-shooter/player-status.cpp
++++ b/samples/shape-shooter/source/shape-shooter/player-status.cpp
+@@ -38,11 +38,11 @@ void PlayerStatus::update(Context& gameContext)
+     case GameState::Playing: {
+         switch (gameContext.pPlayerShip->get_state()) {
+         case Entity::State::Inactive: {
+-            if (mLives) {
+-                if (0 <= mRespawnTimer) {
+-                    gameContext.pPlayerShip->spawn();
+-                } else {
++            if (gameContext.scoreBoard.get_lives()) {
++                if (0 < mRespawnTimer) {
+                     mRespawnTimer -= gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();
++                } else {
++                    gameContext.pPlayerShip->spawn();
+                 }
+             } else {
+                 gameContext.gameState = GameState::GameOver;
+@@ -69,4 +69,11 @@ void PlayerStatus::update(Context& gameContext)
+     }
+ }
+ 
++void PlayerStatus::kill(Context& gameContext)
++{
++    gameContext.pPlayerShip->kill();
++    gameContext.scoreBoard.subtract_life();
++    mRespawnTimer = 0.1f;
++}
++
+ } // namespace shape_shooter
+diff --git a/samples/shape-shooter/source/shape-shooter/score-board.cpp b/samples/shape-shooter/source/shape-shooter/score-board.cpp
+index 54de15e..b356487 100644
+--- a/samples/shape-shooter/source/shape-shooter/score-board.cpp
++++ b/samples/shape-shooter/source/shape-shooter/score-board.cpp
+@@ -92,6 +92,7 @@ void ScoreBoard::reset()
+ {
+     save_high_score(mHighScore);
+     mHighScore = 0;
++    mLives = 3;
+     mScore = 0;
+     mMultiplier = 0;
+     mMultiplierTimer = 0;
+@@ -107,11 +108,23 @@ const dst::gfx::Renderer<dst::text::Font>& ScoreBoard::get_font_renderer() const
+     return mFontRenderer;
+ }
+ 
+-int ScoreBoard::get_score()
++int ScoreBoard::get_lives() const
++{
++    return mLives;
++}
++
++int ScoreBoard::get_score() const
+ {
+     return mScore;
+ }
+ 
++void ScoreBoard::subtract_life()
++{
++    if (mLives) {
++        --mLives;
++    }
++}
++
+ void ScoreBoard::add_points(int points)
+ {
+     mScore += points * mMultiplier;
+@@ -150,7 +163,7 @@ void ScoreBoard::update()
+     mScoreTextMesh.update(deltaTime);
+     mHighScoreTextMesh.set_text("hi : " + std::to_string(mHighScore));
+     mHighScoreTextMesh.update(deltaTime);
+-    mLivesTextMesh.set_text("lives : " + std::to_string(3));
++    mLivesTextMesh.set_text("lives : " + std::to_string(mLives));
+     mLivesTextMesh.update(deltaTime);
+ }
+ 
+@@ -159,27 +172,6 @@ void ScoreBoard::on_gui()
+     if (ImGui::CollapsingHeader("ScoreBoard")) {
+         ImGui::Indent();
+         {
+-            // static const std::array<const char*, (size_t)State::Count> scStateNames{ "Attract", "Play", "GameOver", };
+-#if 0
+-            if (ImGui::BeginCombo("State", scStateNames[(size_t)mState])) {
+-                for (size_t state_i = 0; state_i < scStateNames.size(); ++state_i) {
+-                    ImGui::PushID((int)state_i);
+-                    auto selected = (size_t)mState == state_i;
+-                    if (ImGui::Selectable(scStateNames[(size_t)state_i], selected)) {
+-                        mState = (State)state_i;
+-                    }
+-                    if (selected) {
+-                        ImGui::SetItemDefaultFocus();
+-                    }
+-                    ImGui::PopID();
+-                }
+-                ImGui::EndCombo();
+-            }
+-#else
+-            // auto stateIndex = (size_t)mState;
+-            // combo_gui("State", scStateNames.size(), scStateNames.data(), &stateIndex);
+-            // mState = (State)stateIndex;
+-#endif
+             transform_gui("Score transform", &get_text_mesh_renderer(mScoreTextMesh)->transform);
+             transform_gui("HighScore transform", &get_text_mesh_renderer(mHighScoreTextMesh)->transform);
+             transform_gui("Lives transform", &get_text_mesh_renderer(mLivesTextMesh)->transform);
+diff --git a/samples/shape-shooter/source/shape-shooter/shape-shooter.cpp b/samples/shape-shooter/source/shape-shooter/shape-shooter.cpp
+index 96351fc..d7cc17f 100644
+--- a/samples/shape-shooter/source/shape-shooter/shape-shooter.cpp
++++ b/samples/shape-shooter/source/shape-shooter/shape-shooter.cpp
+@@ -301,6 +301,9 @@ int main(int, const char*[])
+                     }
+                 } break;
+                 case shape_shooter::GameState::GameOver: {
++                    if (input.keyboard.pressed(gvk::system::Key::SpaceBar)) {
++                        gameContext.gameState = shape_shooter::GameState::Attract;
++                    }
+                 } break;
+                 default: {
+                     assert(false);
+@@ -346,7 +349,7 @@ int main(int, const char*[])
+ 
+             ///////////////////////////////////////////////////////////////////////////////
+             gameContext.scoreBoard.update();
+-            gameContext.playerStatus.update(gameContext);
++            // gameContext.playerStatus.update(gameContext);
+             gameContext.enemySpawner.update(gameContext);
+             gameContext.entityManager.update(gameContext);
+             gameContext.particleManager.update();

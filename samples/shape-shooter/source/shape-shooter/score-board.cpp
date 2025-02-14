@@ -108,7 +108,7 @@ const dst::gfx::Renderer<dst::text::Font>& ScoreBoard::get_font_renderer() const
     return mFontRenderer;
 }
 
-int ScoreBoard::get_score()
+int ScoreBoard::get_score() const
 {
     return mScore;
 }
@@ -118,6 +118,18 @@ void ScoreBoard::add_points(int points)
     mScore += points * mMultiplier;
     if (mHighScore <= mScore) {
         mHighScore = mScore;
+    }
+}
+
+int ScoreBoard::get_lives() const
+{
+    return mLives;
+}
+
+void ScoreBoard::subtract_life()
+{
+    if (mLives) {
+        --mLives;
     }
 }
 

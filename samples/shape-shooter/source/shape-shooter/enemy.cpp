@@ -65,14 +65,15 @@ uint32_t Enemy::MoveRandomly::get_point_value() const
 void Enemy::MoveRandomly::update(Context& gameContext, Enemy& enemy)
 {
     // TODO : Hardcoded values...
-    directionTimer -= gameContext.programClock.elapsed<gvk::system::Seconds<float>>();
+    auto deltaTime = gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();
+    directionTimer -= deltaTime;
     if (0 <= directionTimer) {
         direction += gameContext.rng.range(-0.1f, 0.1f);
         direction = glm::wrapAngle(direction);
         directionTimer = 0.1f;
     }
     enemy.velocity += from_polar(direction, 0.4f / OneOverSixty);
-    enemy.orientation -= 0.05f;
+    enemy.orientation -= 0.05f / OneOverSixty * deltaTime;
     if (!gameContext.playField.contains(enemy.position)) {
         direction = std::atan2(-enemy.position.z, -enemy.position.x) + gameContext.rng.range(-glm::half_pi<float>(), glm::half_pi<float>());
     }
