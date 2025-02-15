@@ -131,7 +131,10 @@ VkResult Renderer<dst::text::Font>::create(const gvk::Context& context, const gv
     assert(pRenderer);
     return dvk_result_scope_begin(VK_ERROR_INITIALIZATION_FAILED) {
         dvk_result(pRenderer->create_pipline(renderPass, font));
-        dvk_result(gvk::Sampler::create(context.get<gvk::Devices>()[0], &gvk::get_default<VkSamplerCreateInfo>(), nullptr, &pRenderer->mSampler));
+        auto samplerCreateInfo = gvk::get_default<VkSamplerCreateInfo>();
+        samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
+        samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
+        dvk_result(gvk::Sampler::create(context.get<gvk::Devices>()[0], &samplerCreateInfo, nullptr, &pRenderer->mSampler));
         dvk_result(pRenderer->create_image_views(context, font));
         dvk_result(pRenderer->allocate_descriptor_set());
         pRenderer->update_descriptor_set();
@@ -334,7 +337,7 @@ VkResult Renderer<dst::text::Font>::create_image_views(const gvk::Context& conte
 {
     gvk_result_scope_begin(VK_ERROR_INITIALIZATION_FAILED) {
         const auto& device = context.get<gvk::Devices>()[0];
-        gvk_result(gvk::Sampler::create(device, &gvk::get_default<VkSamplerCreateInfo>(), nullptr, &mSampler));
+        // gvk_result(gvk::Sampler::create(device, &gvk::get_default<VkSamplerCreateInfo>(), nullptr, &mSampler));
         gvk::Buffer stagingBuffer;
         mImageViews.reserve(font.get_atlas().pages.size());
         for (const auto& page : font.get_atlas().pages) {

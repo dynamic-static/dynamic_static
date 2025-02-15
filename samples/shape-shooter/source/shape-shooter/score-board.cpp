@@ -128,8 +128,12 @@ int ScoreBoard::get_lives() const
 
 void ScoreBoard::subtract_life()
 {
+    reset_multiplier();
     if (mLives) {
         --mLives;
+        if (!mLives) {
+            Context::instance().gameState = shape_shooter::GameState::GameOver;
+        }
     }
 }
 
@@ -143,8 +147,9 @@ void ScoreBoard::reset_score()
 {
     save_high_score(mHighScore);
     mHighScore = load_high_score();
-    reset_multiplier();
+    mLives = 3;
     mScore = 0;
+    reset_multiplier();
 }
 
 void ScoreBoard::reset_multiplier()
@@ -155,15 +160,29 @@ void ScoreBoard::reset_multiplier()
 void ScoreBoard::update()
 {
     auto deltaTime = Context::instance().gameClock.elapsed<gvk::system::Seconds<float>>();
-    if (Context::instance().gameState == GameState::Attract) {
+    switch (Context::instance().gameState) {
+    case GameState::Attract: {
         mScoreTextMesh.set_text("Shape Shooter");
-    } else {
+        mHighScoreTextMesh.set_text("hi : " + std::to_string(mHighScore));
+        mLivesTextMesh.set_text("Press Button");
+    } break;
+    case GameState::Playing:
+    case GameState::Paused: {
         mScoreTextMesh.set_text(std::to_string(mScore));
+        mHighScoreTextMesh.set_text("hi : " + std::to_string(mHighScore));
+        mLivesTextMesh.set_text("lives : " + std::to_string(mLives));
+    } break;
+    case GameState::GameOver: {
+        mScoreTextMesh.set_text(std::to_string(mScore));
+        mHighScoreTextMesh.set_text("hi : " + std::to_string(mHighScore));
+        mLivesTextMesh.set_text("Game Over");
+    } break;
+    default: {
+        assert(false);
+    } break;
     }
     mScoreTextMesh.update(deltaTime);
-    mHighScoreTextMesh.set_text("hi : " + std::to_string(mHighScore));
     mHighScoreTextMesh.update(deltaTime);
-    mLivesTextMesh.set_text("lives : " + std::to_string(3));
     mLivesTextMesh.update(deltaTime);
 }
 

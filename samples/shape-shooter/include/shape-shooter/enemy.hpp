@@ -65,6 +65,7 @@ public:
         void update(Context& gameContext, Enemy& enemy) override final;
         float directionTimer{ };
         float direction{ };
+        glm::vec4 color{  };
     };
 
     Enemy(Context& gameContext, Sprite sprite, std::unique_ptr<Behavior>&& upBehavior);
@@ -73,6 +74,8 @@ public:
     uint32_t get_point_value() const;
     bool is_active() const;
     void handle_collision(const Enemy& other);
+    void kill() override final;
+    void was_shot();
     void update(Context& gameContext) override final;
     void draw(dst::gfx::SpriteRenderer& spriteRenderer) const override final;
 

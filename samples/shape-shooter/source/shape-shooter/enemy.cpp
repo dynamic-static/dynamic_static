@@ -120,6 +120,48 @@ void Enemy::handle_collision(const Enemy& other)
     velocity += 10.0f * direction / (glm::length2(direction) + 1);
 }
 
+void Enemy::kill()
+{
+    expired = true;
+    auto hue0 = Context::instance().rng.range(0.0f, 6.0f);
+    auto hue1 = glm::mod(hue0 + Context::instance().rng.range(0.0f, 2.0f), 6.0f);
+    auto color0 = hsv_to_color(hue0, 0.5f, 1.0f);
+    auto color1 = hsv_to_color(hue1, 0.5f, 1.0f);
+    for (uint32_t i = 0; i < 120; ++i) {
+        float speed = 18.0f * (1.0f - 1.0f / Context::instance().rng.range(1.0f, 10.0f));
+        Particle particle{ };
+        particle.position = position;
+        particle.velocity = get_random_vector(speed, speed) / OneOverSixty;
+        particle.duration = 190.0f * OneOverSixty;
+        particle.scale *= 1.5f;
+        particle.type = Particle::Type::Enemy;
+        particle.color = glm::lerp(color0, color1, Context::instance().rng.range(0.0f, 1.0f));
+        Context::instance().particleManager.add(particle);
+    }
+}
+
+void Enemy::was_shot()
+{
+    expired = true;
+
+
+    auto hue0 = Context::instance().rng.range(0.0f, 6.0f);
+    auto hue1 = glm::mod(hue0 + Context::instance().rng.range(0.0f, 2.0f), 6.0f);
+    auto color0 = hsv_to_color(hue0, 0.5f, 1.0f);
+    auto color1 = hsv_to_color(hue1, 0.5f, 1.0f);
+    for (uint32_t i = 0; i < 120; ++i) {
+        float speed = 18.0f * (1.0f - 1.0f / Context::instance().rng.range(1.0f, 10.0f));
+        Particle particle{ };
+        particle.position = position;
+        particle.velocity = get_random_vector(speed, speed) / OneOverSixty;
+        particle.duration = 190.0f * OneOverSixty;
+        particle.scale *= 1.5f;
+        particle.type = Particle::Type::Enemy;
+        particle.color = glm::lerp(color0, color1, Context::instance().rng.range(0.0f, 1.0f));
+        Context::instance().particleManager.add(particle);
+    }
+}
+
 void Enemy::update(Context& gameContext)
 {
     auto deltaTime = gameContext.gameClock.elapsed<gvk::system::Seconds<float>>();

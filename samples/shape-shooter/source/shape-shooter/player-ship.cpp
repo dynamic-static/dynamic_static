@@ -44,12 +44,29 @@ uint64_t PlayerShip::get_type_id() const
 void PlayerShip::spawn()
 {
     assert(mState == State::Inactive);
-    mState = State::Spawning;
+    if (Context::instance().scoreBoard.get_lives()) {
+        mState = State::Spawning;
+    }
 }
 
 void PlayerShip::kill()
 {
-
+    // TODO : Reset spawn timer
+    Context::instance().scoreBoard.subtract_life();
+    auto explosionColor = glm::vec4(0.8f, 0.8f, 0.4f, 1.0f);
+    for (uint32_t i = 0; i < 1200; ++i) {
+        float speed = 18.0f * (1.0f - 1.0f / Context::instance().rng.range(1.0f, 10.0f));
+        Particle particle{ };
+        particle.position = position;
+        particle.velocity = get_random_vector(speed, speed) / OneOverSixty;
+        particle.duration = 190.0f * OneOverSixty;
+        particle.scale *= 1.5f;
+        particle.type = Particle::Type::None;
+        particle.color = glm::lerp(gvk::math::Color::White, explosionColor, Context::instance().rng.range(0.0f, 1.0f));
+        Context::instance().particleManager.add(particle);
+    }
+    mState = State::Inactive;
+    spawn();
 }
 
 void PlayerShip::update(Context& gameContext)
@@ -61,6 +78,8 @@ void PlayerShip::update(Context& gameContext)
     case State::Spawning: {
         // TODO : Apply force to grid
         // TODO : SFX
+        // TODO : Spawn timer
+        position = { };
         mState = State::Active;
     } break;
     case State::Active: {

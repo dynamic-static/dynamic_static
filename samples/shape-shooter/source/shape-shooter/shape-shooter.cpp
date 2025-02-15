@@ -301,6 +301,10 @@ int main(int, const char*[])
                     }
                 } break;
                 case shape_shooter::GameState::GameOver: {
+                    if (input.keyboard.pressed(gvk::system::Key::SpaceBar)) {
+                        gameContext.gameState = shape_shooter::GameState::Attract;
+                        gameContext.scoreBoard.reset_score();
+                    }
                 } break;
                 default: {
                     assert(false);

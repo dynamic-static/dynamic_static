@@ -58,6 +58,7 @@ void EntityManager::update(Context& gameContext)
 
 void EntityManager::handle_collisions()
 {
+    // HAndle collisions between enemies
     for (uint32_t i = 0; i < mEnemies.size(); ++i) {
         for (uint32_t j = i + 1; j < mEnemies.size(); ++j) {
             if (Entity::collision(*mEnemies[i], *mEnemies[j])) {
@@ -66,43 +67,38 @@ void EntityManager::handle_collisions()
             }
         }
     }
+
+    // Handle collisions between bullets and enemies
     for (auto pEnemy : mEnemies) {
         for (auto pBullet : mBullets) {
             if (Entity::collision(*pEnemy, *pBullet)) {
                 Context::instance().scoreBoard.add_points(pEnemy->get_point_value());
                 Context::instance().scoreBoard.increase_multiplier();
-                pEnemy->expired = true;
-                pBullet->expired = true;
-                auto hue0 = Context::instance().rng.range(0.0f, 6.0f);
-                auto hue1 = glm::mod(hue0 + Context::instance().rng.range(0.0f, 2.0f), 6.0f);
-                auto color0 = hsv_to_color(hue0, 0.5f, 1.0f);
-                auto color1 = hsv_to_color(hue1, 0.5f, 1.0f);
-                for (uint32_t i = 0; i < 120; ++i) {
-                    float speed = 18.0f * (1.0f - 1.0f / Context::instance().rng.range(1, 10));
-                    Particle particle{ };
-                    particle.position = pEnemy->position;
-                    particle.velocity = get_random_vector(speed, speed) / OneOverSixty;
-                    particle.duration = 190.0f * OneOverSixty;
-                    particle.scale *= 1.5f;
-                    particle.type = Particle::Type::Enemy;
-                    particle.color = glm::lerp(color0, color1, Context::instance().rng.range(0.0f, 1.0f));
-                    Context::instance().particleManager.add(particle);
-                }
+                pEnemy->was_shot();
+                pBullet->expired;
             }
         }
     }
-    const auto& pPlayerShip = Context::instance().pPlayerShip;
+
+    // Handle collisions between the player and enemies
     for (auto pEnemy : mEnemies) {
-        if (pEnemy->is_active() && Entity::collision(*pEnemy, *pPlayerShip)) {
+        if (pEnemy->is_active() && Entity::collision(*pEnemy, *Context::instance().pPlayerShip)) {
             kill_player();
             break;
         }
     }
+
+    // Handle collisions with black holes
+    // TODO :
 }
 
 void EntityManager::kill_player()
 {
-
+    Context::instance().pPlayerShip->kill();
+    Context::instance().enemySpawner.reset();
+    for (auto pEnemy : mEnemies) {
+        pEnemy->kill();
+    }
 }
 
 void EntityManager::draw(dst::gfx::SpriteRenderer& spriteRenderer) const
