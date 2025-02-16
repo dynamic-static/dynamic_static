@@ -179,30 +179,34 @@ void reset_camera(gvk::math::Camera* pCamera)
     reset_camera(pCamera, pCamera->projectionMode);
 }
 
-void camera_gui(const char* pName, gvk::math::Camera* pCamera)
+void on_gui(Context& gameContext)
 {
-    assert(pCamera);
-    ImGui::PushID(pCamera);
-    if (ImGui::CollapsingHeader(pName)) {
+    // Camera
+    ImGui::PushID(&gameContext.camera);
+    if (ImGui::CollapsingHeader("Camera")) {
         ImGui::Indent();
         {
             if (ImGui::Button("Reset")) {
-                reset_camera(pCamera);
+                reset_camera(&gameContext.camera);
             }
-            transform_gui("transform", &pCamera->transform);
-            ImGui::DragFloat("aspectRatio", &pCamera->aspectRatio);
-            ImGui::DragFloat("fieldOfView", &pCamera->fieldOfView);
-            ImGui::DragFloat("nearPlane", &pCamera->nearPlane);
-            ImGui::DragFloat("farPlane", &pCamera->farPlane);
-            auto projectionModeIndex = (size_t)pCamera->projectionMode;
+            transform_gui("transform", &gameContext.camera.transform);
+            ImGui::DragFloat("aspectRatio", &gameContext.camera.aspectRatio);
+            ImGui::DragFloat("fieldOfView", &gameContext.camera.fieldOfView);
+            ImGui::DragFloat("nearPlane", &gameContext.camera.nearPlane);
+            ImGui::DragFloat("farPlane", &gameContext.camera.farPlane);
+            auto projectionModeIndex = (size_t)gameContext.camera.projectionMode;
             static const std::array<const char*, 2> scProjectionModes{ "Perspective", "Orthographic", };
             if (combo_gui("projectionMode", scProjectionModes.size(), scProjectionModes.data(), &projectionModeIndex)) {
-                reset_camera(pCamera, (gvk::math::Camera::ProjectionMode)projectionModeIndex);
+                reset_camera(&gameContext.camera, (gvk::math::Camera::ProjectionMode)projectionModeIndex);
             }
         }
         ImGui::Unindent();
     }
     ImGui::PopID();
+
+    // Game objects
+    gameContext.scoreBoard.on_gui();
+    gameContext.grid.on_gui();
 }
 
 } // namespace shape_shooter

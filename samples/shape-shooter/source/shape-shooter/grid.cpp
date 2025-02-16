@@ -25,7 +25,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *******************************************************************************/
 
 #include "shape-shooter/grid.hpp"
-
 #include "shape-shooter/utilities.hpp"
 
 #include "imgui.h"
@@ -191,21 +190,27 @@ void Grid::record_draw_cmds(const gvk::CommandBuffer& commandBuffer, const gvk::
 
 void Grid::on_gui()
 {
-    auto stiffness = mStiffness;
-    if (ImGui::DragFloat("Spring stiffness", &mStiffness)) {
-        for (auto& spring : mSprings) {
-            if (spring.mStiffness == stiffness) {
-                spring.mStiffness = mStiffness;
+    if (ImGui::CollapsingHeader("Grid")) {
+        ImGui::Indent();
+        {
+            auto stiffness = mStiffness;
+            if (ImGui::DragFloat("Spring stiffness", &mStiffness)) {
+                for (auto& spring : mSprings) {
+                    if (spring.mStiffness == stiffness) {
+                        spring.mStiffness = mStiffness;
+                    }
+                }
+            }
+            auto damping = mDamping;
+            if (ImGui::DragFloat("Spring damping", &mDamping)) {
+                for (auto& spring : mSprings) {
+                    if (spring.mDamping == damping) {
+                        spring.mDamping = mDamping;
+                    }
+                }
             }
         }
-    }
-    auto damping = mDamping;
-    if (ImGui::DragFloat("Spring damping", &mDamping)) {
-        for (auto& spring : mSprings) {
-            if (spring.mDamping == damping) {
-                spring.mDamping = mDamping;
-            }
-        }
+        ImGui::Unindent();
     }
 }
 

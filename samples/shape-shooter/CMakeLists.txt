@@ -26,6 +26,7 @@ dst_add_executable(
         "${includeDirectory}"
     includeFiles
         "${includePath}/audio.hpp"
+        "${includePath}/bloom.hpp"
         "${includePath}/bullet.hpp"
         "${includePath}/camera.hpp"
         "${includePath}/context.hpp"
@@ -47,6 +48,7 @@ dst_add_executable(
         "${includePath}/utilities.hpp"
     sourceFiles
         "${sourcePath}/audio.cpp"
+        "${sourcePath}/bloom.cpp"
         "${sourcePath}/bullet.cpp"
         "${sourcePath}/camera.cpp"
         "${sourcePath}/context.cpp"

@@ -366,6 +366,7 @@ int main(int, const char*[])
                 gameContext.camera.set_aspect_ratio(extent.width, extent.height);
                 gameContext.renderExtent = { extent.width, extent.height };
 
+
                 // TODO : Documentation
                 auto spriteRendererItr = gameContext.spriteRenderers.find(acquiredImageInfo.index);
                 if (spriteRendererItr == gameContext.spriteRenderers.end()) {
@@ -419,11 +420,9 @@ int main(int, const char*[])
                     guiRendererBeginInfo.pTextStreamCodePoints = !textStream.empty() ? textStream.data() : nullptr;
 
                     // Call guiRenderer.begin_gui().  Note that all ImGui widgets must be handled
-                    //  between calls to begin_gui()/end_gui()
+                    //  between calls to begin_gui()/end_gui(), which are called once per frame
                     guiRenderer.begin_gui(guiRendererBeginInfo);
-                    shape_shooter::camera_gui("Camera", &gameContext.camera);
-                    gameContext.scoreBoard.on_gui();
-                    gameContext.grid.on_gui();
+                    shape_shooter::on_gui(gameContext);
                     guiRenderer.end_gui(acquiredImageInfo.index);
                 }
 

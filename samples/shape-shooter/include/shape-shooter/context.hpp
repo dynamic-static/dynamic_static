@@ -27,6 +27,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #pragma once
 
 #include "shape-shooter/audio.hpp"
+#include "shape-shooter/bloom.hpp"
 #include "shape-shooter/defines.hpp"
 #include "shape-shooter/enemy-spawner.hpp"
 #include "shape-shooter/entity-manager.hpp"

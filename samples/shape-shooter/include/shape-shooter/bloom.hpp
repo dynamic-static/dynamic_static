@@ -26,34 +26,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
 
-#include "shape-shooter/defines.hpp"
+#include "../../dynamic-static.sample-utilities.hpp"
 
 namespace shape_shooter {
 
-struct PlayField
+class Bloom final
 {
-    bool contains(const glm::vec3& point) const;
-    glm::vec3 extent{ };
+public:
+    struct CreateInfo
+    {
+    };
+
+    static VkResult create(const gvk::Context& gvkContext, const CreateInfo* pCreateInfo, Bloom* pBloom);
+    VkResult begin_render_pass(const gvk::CommandBuffer& commandBuffer, const gvk::RenderTarget& renderTarget);
+    void end_render_pass(const gvk::CommandBuffer& commandBuffer);
+    void draw_render_target(const gvk::CommandBuffer& commandBuffer);
+    void on_gui();
+
+private:
+    bool mEnabled{ true };
+    float mBaseIntensity{ 0.5f };
+    float mBloomIntensity{ 0.5f };
+    float mBaseSaturation{ 0.5f };
+    float mBloomSaturation{ 0.5f };
+    gvk::RenderTarget mInputRenderTarget;
+    std::array<gvk::RenderTarget, 2> mRenderTargets;
+    gvk::RenderTarget mOutputRenderTarget;
 };
-
-float get_orientation(const glm::vec3& v);
-glm::vec3 from_polar(float angle, float magnitude);
-glm::vec3 scale_to(const glm::vec3& v, float length);
-float from_1920x1080(float base, float value);
-glm::vec3 ray_plane_intersection(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const glm::vec3& planePoint, const glm::vec3& planeNormal);
-glm::vec3 get_random_vector(float minLength, float maxLength);
-glm::vec4 hsv_to_color(float hue, float saturation, float value, float alpha = 1.0f);
-bool combo_gui(const char* pEnumName, size_t enumeratorCount, const char* const* pEnumeratorNames, size_t* pSelectionIndex);
-void transform_gui(const char* pName, gvk::math::Transform* pTransform);
-void reset_camera(gvk::math::Camera* pCamera, gvk::math::Camera::ProjectionMode projectionMode);
-void reset_camera(gvk::math::Camera* pCamera);
-void on_gui(Context& gameContext);
-
-template <typename T>
-inline uint64_t get_type_id()
-{
-    static const T* sPtr;
-    return (uint64_t)&sPtr;
-}
 
 } // namespace shape_shooter
