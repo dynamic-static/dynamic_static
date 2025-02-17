@@ -57,9 +57,7 @@ private:
     gvk::Pipeline mExtractPipeline;
     gvk::Pipeline mBlurPipeline;
     gvk::Pipeline mCombinePipeline;
-    gvk::RenderTarget mInputRenderTarget;
     std::array<gvk::RenderTarget, 2> mRenderTargets;
-    gvk::RenderTarget mOutputRenderTarget;
 };
 
 } // namespace shape_shooter

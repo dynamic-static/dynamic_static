@@ -189,6 +189,10 @@ VkResult BloomRenderer::create(const gvk::Context& gvkContext, const CreateInfo*
             .source = R"(
                 #version 450
 
+                layout(push_constant) uniform PushConstants {
+                    float threshold;
+                } pc;
+
                 layout(set = 0, binding = 0) uniform sampler2D image;
                 layout(location = 0) in vec2 fsTexcoord;
                 layout(location = 0) out vec4 fragColor;
@@ -196,6 +200,7 @@ VkResult BloomRenderer::create(const gvk::Context& gvkContext, const CreateInfo*
                 void main()
                 {
                     fragColor = texture(image, fsTexcoord);
+                    fragColor = clamp((fragColor - pc.threshold) / (1 - pc.threshold), 0, 1);
                 }
             )"
         };
@@ -208,13 +213,33 @@ VkResult BloomRenderer::create(const gvk::Context& gvkContext, const CreateInfo*
             .source = R"(
                 #version 450
 
+                layout(push_constant) uniform PushConstants {
+                    vec2 offset;
+                    float scale;
+                    float strength;
+                } pc;
+
                 layout(set = 0, binding = 0) uniform sampler2D image;
                 layout(location = 0) in vec2 fsTexcoord;
                 layout(location = 0) out vec4 fragColor;
 
                 void main()
                 {
-                    fragColor = texture(image, fsTexcoord);
+                    float weight[5];
+                    weight[0] = 0.227027;
+                    weight[1] = 0.1945946;
+                    weight[2] = 0.1216216;
+                    weight[3] = 0.054054;
+                    weight[4] = 0.016216;
+
+                    fragColor = vec4(0);
+                    vec2 offset = 1.0 / textureSize(image, 0) * pc.offset * pc.scale;
+                    vec3 result = texture(image, fsTexcoord).rgb * weight[0];
+                    for (int i = 0; i < 5; ++i) {
+                        fragColor += texture(image, fsTexcoord + offset) * weight[i] * pc.strength;
+                        fragColor += texture(image, fsTexcoord - offset) * weight[i] * pc.strength;
+                    }
+                    fragColor.a = 1;
                 }
             )"
         };
@@ -227,13 +252,43 @@ VkResult BloomRenderer::create(const gvk::Context& gvkContext, const CreateInfo*
             .source = R"(
                 #version 450
 
-                layout(set = 0, binding = 0) uniform sampler2D image;
+                layout(push_constant) uniform PushConstants {
+                    float baseIntensity;
+                    float baseSaturation;
+                    float bloomIntensity;
+                    float bloomSaturation;
+                } pc;
+
+                layout(set = 0, binding = 0) uniform sampler2D baseImage;
+                layout(set = 0, binding = 1) uniform sampler2D bloomImage;
                 layout(location = 0) in vec2 fsTexcoord;
                 layout(location = 0) out vec4 fragColor;
 
+                // Helper for modifying the saturation of a color.
+                vec4 adjust_saturation(vec4 color, float saturation)
+                {
+                    // The constants 0.3, 0.59, and 0.11 are chosen because the
+                    // human eye is more sensitive to green light, and less to blue.
+                    float grey = dot(color.rgb, vec3(0.3, 0.59, 0.11));
+                    return mix(vec4(grey), color, saturation);
+                }
+
                 void main()
                 {
-                    fragColor = texture(image, fsTexcoord);
+                    // Look up the bloom and original base image colors.
+                    vec4 baseColor = texture(baseImage, fsTexcoord);
+                    vec4 bloomColor = texture(bloomImage, fsTexcoord);
+
+                    // Adjust color saturation and intensity.
+                    baseColor = adjust_saturation(baseColor, pc.baseSaturation) * pc.baseIntensity;
+                    bloomColor = adjust_saturation(bloomColor, pc.bloomSaturation) * pc.bloomIntensity;
+
+                    // Darken down the base image in areas where there is a lot of bloom,
+                    // to prevent things looking excessively burned-out.
+                    baseColor *= (1 - clamp(bloomColor, 0, 1));
+
+                    // Combine the two images.
+                    fragColor = baseColor + bloomColor;
                 }
             )"
         };
@@ -245,15 +300,16 @@ VkResult BloomRenderer::create(const gvk::Context& gvkContext, const CreateInfo*
     return gvkResult;
 }
 
-VkResult BloomRenderer::begin_render_pass(const gvk::CommandBuffer& commandBuffer, const gvk::RenderTarget& outputRenderTarget)
+#if 0
+VkResult BloomRenderer::begin_render_pass(const gvk::CommandBuffer& commandBuffer, const gvk::RenderTarget& inputRenderTarget)
 {
     gvk_result_scope_begin(VK_ERROR_INITIALIZATION_FAILED) {
-        gvk_result(outputRenderTarget ? VK_SUCCESS : VK_ERROR_INITIALIZATION_FAILED);
-        mOutputRenderTarget = outputRenderTarget;
+        gvk_result(inputRenderTarget ? VK_SUCCESS : VK_ERROR_INITIALIZATION_FAILED);
+        mOutputRenderTarget = inputRenderTarget;
         auto inputFramebufferCreateInfo = mInputRenderTarget ? mInputRenderTarget.get<VkFramebufferCreateInfo>() : gvk::get_default<VkFramebufferCreateInfo>();
         auto outputFramebufferCreateInfo = mOutputRenderTarget ? mOutputRenderTarget.get<VkFramebufferCreateInfo>() : gvk::get_default<VkFramebufferCreateInfo>();
         if (inputFramebufferCreateInfo.width != outputFramebufferCreateInfo.width || inputFramebufferCreateInfo.height != outputFramebufferCreateInfo.height) {
-            gvk::Auto<VkFramebufferCreateInfo> autoFramebufferCreateInfo = outputRenderTarget.get<VkFramebufferCreateInfo>();
+            gvk::Auto<VkFramebufferCreateInfo> autoFramebufferCreateInfo = inputRenderTarget.get<VkFramebufferCreateInfo>();
             gvk::detail::enumerate_structure_handles(
                 *autoFramebufferCreateInfo,
                 [](VkObjectType, const uint64_t& handle)
@@ -261,7 +317,7 @@ VkResult BloomRenderer::begin_render_pass(const gvk::CommandBuffer& commandBuffe
                     const_cast<uint64_t&>(handle) = 0;
                 }
             );
-            gvk_result(gvk::RenderTarget::create(outputRenderTarget.get<gvk::Device>(), &*autoFramebufferCreateInfo, nullptr, &mInputRenderTarget));
+            gvk_result(gvk::RenderTarget::create(inputRenderTarget.get<gvk::Device>(), &*autoFramebufferCreateInfo, nullptr, &mInputRenderTarget));
         }
         commandBuffer.CmdBeginRenderPass(&mInputRenderTarget.get<VkRenderPassBeginInfo>(), VK_SUBPASS_CONTENTS_INLINE);
     } gvk_result_scope_end;
@@ -284,6 +340,7 @@ void BloomRenderer::end_render_pass(const gvk::CommandBuffer& commandBuffer)
     commandBuffer.CmdBeginRenderPass(nullptr, VK_SUBPASS_CONTENTS_INLINE);
     commandBuffer.CmdEndRenderPass();
 }
+#endif
 
 void BloomRenderer::draw_render_target(const gvk::CommandBuffer& commandBuffer)
 {
@@ -309,28 +366,25 @@ VkResult BloomRenderer::record_cmds(const gvk::Context& gvkContext, const gvk::C
         // Extract
         commandBuffer.CmdBeginRenderPass(nullptr, VK_SUBPASS_CONTENTS_INLINE);
         {
-
+            commandBuffer.CmdBindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, mExtractPipeline);
         }
         commandBuffer.CmdEndRenderPass();
 
-        // Blur horizontal
+        // Blur
         commandBuffer.CmdBeginRenderPass(nullptr, VK_SUBPASS_CONTENTS_INLINE);
         {
-
-        }
-        commandBuffer.CmdEndRenderPass();
-
-        // Blur vertical
-        commandBuffer.CmdBeginRenderPass(nullptr, VK_SUBPASS_CONTENTS_INLINE);
-        {
-
+            commandBuffer.CmdBindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, mBlurPipeline);
+            // H
+            commandBuffer.CmdDraw(3, 1, 0, 0);
+            // V
+            commandBuffer.CmdDraw(3, 1, 0, 0);
         }
         commandBuffer.CmdEndRenderPass();
 
         // Combine
         commandBuffer.CmdBeginRenderPass(nullptr, VK_SUBPASS_CONTENTS_INLINE);
         {
-
+            commandBuffer.CmdBindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, mExtractPipeline);
         }
         commandBuffer.CmdEndRenderPass();
     } gvk_result_scope_end;

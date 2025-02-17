@@ -455,6 +455,7 @@ int main(int, const char*[])
 
                 gvk_result(vkBeginCommandBuffer(acquiredImageInfo.commandBuffer, &gvk::get_default<VkCommandBufferBeginInfo>()));
 
+#if 0
                 // Begin the gvk::RenderPass that renders into the gvk::WsiManager...
                 auto renderPassBeginInfo = acquiredImageRenderTarget.get<VkRenderPassBeginInfo>();
                 vkCmdBeginRenderPass(acquiredImageInfo.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -486,14 +487,60 @@ int main(int, const char*[])
                     const auto& gameCameraDescriptorSet = gameContext.cameraResources.second;
                     vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
                     shape_shooter::Context::instance().scoreBoard.record_draw_cmds(acquiredImageInfo.commandBuffer);
-                }
 
-                // If the gvk::gui::Renderer is enabled, record cmds to render it
-                if (showGui) {
-                    guiRenderer.record_cmds(acquiredImageInfo.commandBuffer, acquiredImageInfo.index);
+                    // If the gvk::gui::Renderer is enabled, record cmds to render it
+                    if (showGui) {
+                        guiRenderer.record_cmds(acquiredImageInfo.commandBuffer, acquiredImageInfo.index);
+                    }
                 }
-
                 vkCmdEndRenderPass(acquiredImageInfo.commandBuffer);
+#else
+                // TODO : Documentation
+                auto renderPassBeginInfo = renderTarget.get<VkRenderPassBeginInfo>();
+                vkCmdBeginRenderPass(acquiredImageInfo.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+                {
+                    VkRect2D scissor{ { }, renderPassBeginInfo.renderArea.extent };
+                    vkCmdSetScissor(acquiredImageInfo.commandBuffer, 0, 1, &scissor);
+                    VkViewport viewport{ 0, 0, (float)scissor.extent.width, (float)scissor.extent.height, 0, 1 };
+                    vkCmdSetViewport(acquiredImageInfo.commandBuffer, 0, 1, &viewport);
+
+                    // Grid
+                    shape_shooter::Context::instance().grid.record_draw_cmds(acquiredImageInfo.commandBuffer, gameContext.camera, gameContext.renderExtent);
+
+                    // TODO : Draw sprites additively w/depth, then render grid (maybe?)
+                    // Sprites
+                    auto spriteCamera = gameContext.camera;
+                    // spriteCamera.projectionMode = gvk::math::Camera::ProjectionMode::Orthographic;
+                    //spriteCamera.fieldOfView = viewport.width;
+                    spriteRenderer.record_draw_cmds(acquiredImageInfo.commandBuffer, spriteCamera);
+                }
+                vkCmdEndRenderPass(acquiredImageInfo.commandBuffer);
+#if 0
+                // TODO : Documentation
+                bloomRenderer.record_cmds(gvkContext, acquiredImageInfo.commandBuffer, wsiContext.get<gvk::wsi::Context::Info>().surfaceFormat.format, renderTarget);
+#endif
+                // TODO : Documentation
+                renderPassBeginInfo = acquiredImageRenderTarget.get<VkRenderPassBeginInfo>();
+                vkCmdBeginRenderPass(acquiredImageInfo.commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+                {
+                    VkRect2D scissor{ { }, renderPassBeginInfo.renderArea.extent };
+                    vkCmdSetScissor(acquiredImageInfo.commandBuffer, 0, 1, &scissor);
+                    VkViewport viewport{ 0, 0, (float)scissor.extent.width, (float)scissor.extent.height, 0, 1 };
+                    vkCmdSetViewport(acquiredImageInfo.commandBuffer, 0, 1, &viewport);
+                    auto pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+
+                    // ScoreBoard
+                    const auto& gameCameraDescriptorSet = gameContext.cameraResources.second;
+                    vkCmdBindDescriptorSets(acquiredImageInfo.commandBuffer, pipelineBindPoint, fontRendererPipelineLayout, 0, 1, &gameCameraDescriptorSet.get<VkDescriptorSet>(), 0, nullptr);
+                    shape_shooter::Context::instance().scoreBoard.record_draw_cmds(acquiredImageInfo.commandBuffer);
+
+                    // If the gvk::gui::Renderer is enabled, record cmds to render it
+                    if (showGui) {
+                        guiRenderer.record_cmds(acquiredImageInfo.commandBuffer, acquiredImageInfo.index);
+                    }
+                }
+                vkCmdEndRenderPass(acquiredImageInfo.commandBuffer);
+#endif
 
                 // TODO : Documentation
                 // TODO : GVK should provide a prepared VkImageMemoryBarrier array
