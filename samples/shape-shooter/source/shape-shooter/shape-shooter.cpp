@@ -143,6 +143,10 @@ int main(int, const char*[])
         gvk::wsi::Context wsiContext = gvk::nullref;
         dst_vk_result(gvk::wsi::Context::create(gvkDevice, gvkSurface, &wsiContextCreateInfo, nullptr, &wsiContext));
 
+        // TODO : Documentation
+        std::map<uint32_t, gvk::RenderTarget> renderTargets;
+        std::map<uint32_t, shape_shooter::BloomRenderer> bloomRenderers;
+
         // Create a gvk::gui::Renderer
         gvk::gui::Renderer guiRenderer;
         gvk_result(gvk::gui::Renderer::create(
@@ -154,10 +158,9 @@ int main(int, const char*[])
             &guiRenderer
         ));
 
-        // Create a gvk::RenderTarget.  We're going to want to be able to render to
-        //  this gvk::RenderTarget and the gvk::WsiManager gvk::RenderTarget objects
-        //  using the same gvk::Pipeline objects so the gvk::RenderPass objects need to
-        //  be compatible...
+        ///////////////////////////////////////////////////////////////////////////////
+        // Bloom
+#if 0
         auto wsiContextInfo = wsiContext.get<gvk::wsi::Context::Info>();
         DstSampleRenderTargetCreateInfo renderTargetCreateInfo{ };
         renderTargetCreateInfo.extent = { 1024, 1024 };
@@ -166,11 +169,13 @@ int main(int, const char*[])
         renderTargetCreateInfo.depthFormat = wsiContextInfo.depthFormat;
         gvk::RenderTarget renderTarget;
         gvk_result(dst_sample_create_render_target(gvkContext, renderTargetCreateInfo, &renderTarget));
+#endif
 
         // Create the gvk::Sampler that we'll use when we bind the gvk::RenderTarget
         //  color attachment as a shader resource...
         gvk::Sampler sampler;
         gvk_result(gvk::Sampler::create(gvkContext.get<gvk::Devices>()[0], &gvk::get_default<VkSamplerCreateInfo>(), nullptr, &sampler));
+        ///////////////////////////////////////////////////////////////////////////////
 
         // These variables will be controlled via gui widgets
         bool showGui = false;
@@ -366,6 +371,28 @@ int main(int, const char*[])
                 gameContext.camera.set_aspect_ratio(extent.width, extent.height);
                 gameContext.renderExtent = { extent.width, extent.height };
 
+                // TODO : Documentation
+                auto& renderTarget = renderTargets[acquiredImageInfo.index];
+                auto renderTargetCreateInfo = renderTarget ? renderTarget.get<VkFramebufferCreateInfo>() : gvk::get_default<VkFramebufferCreateInfo>();
+                if (renderTargetCreateInfo.width != extent.width || renderTargetCreateInfo.height != extent.height) {
+                    auto dstSampleRenderTargetCreateInfo = gvk::get_default<DstSampleRenderTargetCreateInfo>();
+                    dstSampleRenderTargetCreateInfo.extent = extent;
+                    dstSampleRenderTargetCreateInfo.colorFormat = wsiContext.get<gvk::wsi::Context::Info>().surfaceFormat.format;
+                    dstSampleRenderTargetCreateInfo.depthFormat = wsiContext.get<gvk::wsi::Context::Info>().depthFormat;
+                    dstSampleRenderTargetCreateInfo.sampleCount = VK_SAMPLE_COUNT_64_BIT;
+                    gvk_result(dst_sample_create_render_target(gvkContext, dstSampleRenderTargetCreateInfo, &renderTarget));
+                }
+
+                // TODO : Documentation
+                auto bloomRendererItr = bloomRenderers.find(acquiredImageInfo.index);
+                if (bloomRendererItr == bloomRenderers.end()) {
+                    shape_shooter::BloomRenderer::CreateInfo bloomRendererCreateInfo{ };
+                    bloomRendererCreateInfo.renderPass = wsiContext.get<gvk::RenderPass>();
+                    bloomRendererItr = bloomRenderers.insert({ acquiredImageInfo.index, { } }).first;
+                    gvk_result(shape_shooter::BloomRenderer::create(gvkContext, &bloomRendererCreateInfo, &bloomRendererItr->second));
+                }
+                auto& bloomRenderer = bloomRendererItr->second;
+                (void)bloomRenderer;
 
                 // TODO : Documentation
                 auto spriteRendererItr = gameContext.spriteRenderers.find(acquiredImageInfo.index);
@@ -468,11 +495,8 @@ int main(int, const char*[])
 
                 vkCmdEndRenderPass(acquiredImageInfo.commandBuffer);
 
-                // Ensure the gvk::RenderTarget attachments are transitioned back to the
-                //  VkImageLayout expected when the gvk::RenderPass is next executed...the
-                //  VkImageMemoryBarrier objects provided by gvk::RenderTarget do not
-                //  account for layout transitions that occur outside of the associated
-                //  gvk::RenderPass, those must be handled by your application...
+                // TODO : Documentation
+                // TODO : GVK should provide a prepared VkImageMemoryBarrier array
                 auto attachmentCount = renderTarget.get<gvk::Framebuffer>().get<gvk::RenderPass>().get<VkRenderPassCreateInfo2>().attachmentCount;
                 for (size_t attachment_i = 0; attachment_i < attachmentCount; ++attachment_i) {
                     auto imageMemoryBarrier = renderTarget.get<VkImageMemoryBarrier>((uint32_t)attachment_i);

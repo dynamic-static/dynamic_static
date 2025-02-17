@@ -30,17 +30,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 namespace shape_shooter {
 
-class Bloom final
+class BloomRenderer final
 {
 public:
-    struct CreateInfo
+    class CreateInfo
     {
+    public:
+        gvk::RenderPass renderPass;
     };
 
-    static VkResult create(const gvk::Context& gvkContext, const CreateInfo* pCreateInfo, Bloom* pBloom);
+    static VkResult create(const gvk::Context& gvkContext, const CreateInfo* pCreateInfo, BloomRenderer* pBloom);
     VkResult begin_render_pass(const gvk::CommandBuffer& commandBuffer, const gvk::RenderTarget& renderTarget);
     void end_render_pass(const gvk::CommandBuffer& commandBuffer);
     void draw_render_target(const gvk::CommandBuffer& commandBuffer);
+
+    VkResult record_cmds(const gvk::Context& gvkContext, const gvk::CommandBuffer& commandBuffer, VkFormat outputColorFormat, const gvk::RenderTarget& inputRenderTarget);
+
     void on_gui();
 
 private:
@@ -49,6 +54,9 @@ private:
     float mBloomIntensity{ 0.5f };
     float mBaseSaturation{ 0.5f };
     float mBloomSaturation{ 0.5f };
+    gvk::Pipeline mExtractPipeline;
+    gvk::Pipeline mBlurPipeline;
+    gvk::Pipeline mCombinePipeline;
     gvk::RenderTarget mInputRenderTarget;
     std::array<gvk::RenderTarget, 2> mRenderTargets;
     gvk::RenderTarget mOutputRenderTarget;
